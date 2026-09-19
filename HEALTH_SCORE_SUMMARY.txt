@@ -1,0 +1,107 @@
+MOTORCYCLE HEALTH SCORE - SIMPLE EXPLANATION
+
+What is the Health Score?
+
+The Health Score is a number from 0 to 100 that tells how healthy a motorcycle is.
+
+100 = perfect condition
+80 to 99 = excellent
+60 to 79 = good
+40 to 59 = fair
+below 40 = poor
+
+It is not a hard coded number. It is calculated live from real records in the database.
+
+
+FOUR FACTORS
+
+The score is based on four weighted factors:
+
+Factor 1: Maintenance History (30%)
+Checks how many services were done in the last 12 months.
+
+0 services = 0 points
+1 service = 50 points
+2 services = 75 points
+3 or more services = 100 points
+
+Factor 2: Mileage / Service Interval (20%)
+Checks if the motorcycle is due for service based on kilometers traveled.
+
+It compares current_mileage to last_service_mileage and maintenance_interval_km.
+If the motorcycle has not exceeded its service km interval, it gets 100.
+The more km past the interval, the lower the score.
+
+Factor 3: Mechanic Inspection (35%)
+Reads the latest inspection record for these 7 parts:
+
+Engine
+Brakes
+Tires
+Battery
+Lights
+Suspension
+Fluids
+
+Each part is graded:
+
+Good = 100
+Fair = 75
+Needs Attention = 50
+Critical = 25
+
+The inspection score is the average of all 7 parts.
+
+Factor 4: Overdue Services (15%)
+Checks next_maintenance_date.
+
+On time = 100
+Overdue = loses 5 points for each overdue day
+
+
+FINAL SCORE FORMULA
+
+Final Score = round(
+  Maintenance_Score  x 0.30
+  + Mileage_Score    x 0.20
+  + Inspection_Score x 0.35
+  + Overdue_Score    x 0.15
+)
+
+The result is always between 0 and 100.
+
+
+WHY THIS IS NOT HARD CODED
+
+The score is not set manually. Every time a service, inspection, or mileage is updated, the system recalculates the score from the actual data.
+
+For example, after one oil change:
+
+Maintenance goes from 0 to 50 because only 1 service was done.
+The other parts are still perfect at 100.
+The final score becomes 85, not 100.
+
+The motorcycle only gets 100 when all four factors are perfect.
+
+
+REAL TEST RESULTS
+
+These results came from test_health_score_v2.php:
+
+Baseline (no services, no overdue): 70
+Oil change overdue 21 days: 55 (went down)
+Oil change completed: 85 (went up)
+Poor inspection (Needs Attention): 68 (went down)
+Inspection fixed (all Good): 85 (went up)
+Confirmed score is not 100 after one service: 85
+
+
+KEY FILES
+
+motorcycle_health_helper.php = does all the calculations
+maintenance_history table = stores service records
+motorcycle_inspections table = stores mechanic inspections
+customer_health_score.php = customer view
+admin_health_scores.php = admin view
+admin_inspections.php = new page to add inspections
+test_health_score_v2.php = automatic test script

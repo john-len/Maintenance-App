@@ -1,0 +1,1598 @@
+<?php
+// Admin Sidebar Template
+// Usage: require 'admin_sidebar_template.php' at the top of admin pages after session_start() and db.php
+// Then add your content, and finally require 'admin_sidebar_footer.php'
+
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
+    header("Location: index.php");
+    exit;
+}
+
+$adminName = $_SESSION['username'] ?? 'Admin';
+$currentPage = basename($_SERVER['PHP_SELF'], '.php');
+require 'notification_helper.php';
+
+// Get pending count for badge
+$pendingCount = 0;
+try {
+    $pendingCount = $pdo->query("
+        SELECT COUNT(id) FROM bookings 
+        WHERE status IN ('pending', 'unassigned', 'deposit_submitted')
+    ")->fetchColumn();
+} catch (PDOException $e) {
+    $pendingCount = 0;
+}
+
+// Get new/pending emergency request count for badge
+$emergencyCount = 0;
+try {
+    $emergencyCount = $pdo->query("
+        SELECT COUNT(id) FROM emergency_service_requests 
+        WHERE request_status IN ('pending', 'new')
+    ")->fetchColumn();
+} catch (PDOException $e) {
+    $emergencyCount = 0;
+}
+
+// --- Admin notification items for the header bell ---
+$adminNotificationItems = [];
+$adminSeenBookings  = $_SESSION['admin_seen_booking_ids'] ?? [];
+$adminSeenEmergency = $_SESSION['admin_seen_emergency_ids'] ?? [];
+$adminSeenWarranty  = $_SESSION['admin_seen_warranty_ids'] ?? [];
+$adminSeenHealth    = $_SESSION['admin_seen_health_ids'] ?? [];
+
+if (!function_exists('notifTimeAgo')) {
+    function notifTimeAgo($dt) {
+        if (empty($dt)) return '';
+        $ts = strtotime($dt);
+        if (!$ts) return '';
+        $now = time();
+        if ($ts > $now) return date('M d, Y', $ts);
+        $diff = $now - $ts;
+        if ($diff < 60) return 'Just now';
+        if ($diff < 3600) return floor($diff / 60) . 'm ago';
+        if ($diff < 86400) return floor($diff / 3600) . 'h ago';
+        if ($diff < 604800) return floor($diff / 86400) . 'd ago';
+        return date('M d, Y', $ts);
+    }
+}
+
+// Pending / new bookings needing admin action
+try {
+    $sql = "
+        SELECT b.id, b.status, b.schedule_date, b.schedule_start_time, u.name AS customer_name
+        FROM bookings b
+        JOIN users u ON b.user_id = u.id
+        WHERE b.status IN ('pending', 'unassigned', 'deposit_submitted')
+    ";
+    if (!empty($adminSeenBookings)) {
+        $sql .= " AND b.id NOT IN (" . implode(',', array_map('intval', $adminSeenBookings)) . ")";
+    }
+    $sql .= " ORDER BY b.schedule_date ASC, b.schedule_start_time ASC LIMIT 5";
+    foreach ($pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $label = $row['status'] === 'deposit_submitted' ? 'Deposit submitted'
+               : ($row['status'] === 'unassigned' ? 'Unassigned booking' : 'New booking');
+        $adminNotificationItems[] = [
+            'type'       => 'booking',
+            'title'      => $label . ' #' . $row['id'],
+            'message'    => ($row['customer_name'] ?: 'Customer') . ' - ' . date('M d, Y', strtotime($row['schedule_date'])),
+            'link'       => 'manage_bookings.php',
+            'time_label' => date('M d, Y g:i A', strtotime($row['schedule_date'] . ' ' . $row['schedule_start_time']))
+        ];
+    }
+} catch (PDOException $e) {
+    error_log("Admin notif bookings error: " . $e->getMessage());
+}
+
+// Pending / new emergency requests
+try {
+    $sql = "
+        SELECT esr.id, esr.request_status, esr.created_at, u.name AS customer_name
+        FROM emergency_service_requests esr
+        JOIN users u ON esr.customer_id = u.id
+        WHERE esr.request_status IN ('pending', 'new')
+    ";
+    if (!empty($adminSeenEmergency)) {
+        $sql .= " AND esr.id NOT IN (" . implode(',', array_map('intval', $adminSeenEmergency)) . ")";
+    }
+    $sql .= " ORDER BY esr.created_at DESC LIMIT 5";
+    foreach ($pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $adminNotificationItems[] = [
+            'type'       => 'emergency',
+            'title'      => 'Emergency Request #' . $row['id'],
+            'message'    => ($row['customer_name'] ?: 'Customer') . ' needs assistance',
+            'link'       => 'admin_emergency_requests.php',
+            'time_label' => notifTimeAgo($row['created_at'])
+        ];
+    }
+} catch (PDOException $e) {
+    error_log("Admin notif emergency error: " . $e->getMessage());
+}
+
+// Pending warranty claims
+try {
+    $sql = "
+        SELECT wc.id, wc.claim_date, u.name AS customer_name
+        FROM warranty_claims wc
+        JOIN warranties w ON wc.warranty_id = w.id
+        LEFT JOIN users u ON w.customer_id = u.id
+        WHERE wc.claim_status = 'pending'
+    ";
+    if (!empty($adminSeenWarranty)) {
+        $sql .= " AND wc.id NOT IN (" . implode(',', array_map('intval', $adminSeenWarranty)) . ")";
+    }
+    $sql .= " ORDER BY wc.claim_date DESC LIMIT 5";
+    foreach ($pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $adminNotificationItems[] = [
+            'type'       => 'warranty',
+            'title'      => 'Warranty Claim #' . $row['id'],
+            'message'    => ($row['customer_name'] ?: 'Customer') . ' - ' . date('M d, Y', strtotime($row['claim_date'])),
+            'link'       => 'admin_warranty.php',
+            'time_label' => notifTimeAgo($row['claim_date'])
+        ];
+    }
+} catch (PDOException $e) {
+    error_log("Admin notif warranty error: " . $e->getMessage());
+}
+
+// Motorcycles with critical health scores
+try {
+    $sql = "
+        SELECT m.id, m.health_score, m.brand, m.model, m.plate_number, u.name AS customer_name
+        FROM motorcycles m
+        LEFT JOIN users u ON m.user_id = u.id
+        WHERE m.health_score < 60
+    ";
+    if (!empty($adminSeenHealth)) {
+        $sql .= " AND m.id NOT IN (" . implode(',', array_map('intval', $adminSeenHealth)) . ")";
+    }
+    $sql .= " ORDER BY m.health_score ASC LIMIT 5";
+    foreach ($pdo->query($sql)->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $adminNotificationItems[] = [
+            'type'       => 'health',
+            'title'      => 'Low Health Score',
+            'message'    => $row['brand'] . ' ' . $row['model'] . ' (' . $row['plate_number'] . ') - health ' . $row['health_score'],
+            'link'       => 'admin_health_scores.php',
+            'time_label' => ''
+        ];
+    }
+} catch (PDOException $e) {
+    error_log("Admin notif health error: " . $e->getMessage());
+}
+
+$adminNotificationCount = count($adminNotificationItems);
+$adminNotifIcons = [
+    'booking'   => 'bi-journal-text',
+    'emergency' => 'bi-exclamation-triangle-fill',
+    'warranty'  => 'bi-shield-check',
+    'health'    => 'bi-heart-pulse'
+];
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= isset($pageTitle) ? $pageTitle : 'Admin' ?> | Mindanao Eversure</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --primary-color: #0f172a;
+            --primary-gradient: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+            --accent-color: #1e3a5f;
+            --accent-gradient: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+            --bg-light: #f1f5f9;
+            --bg-card: #ffffff;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --sidebar-bg: #0f172a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        /* Enhanced Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+            pointer-events: none;
+            will-change: opacity;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(circle at 80% 20%, rgba(30, 41, 59, 0.2) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(15, 23, 42, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.1) 0%, transparent 60%);
+            animation: bgPulse 15s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .bg-animation .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.25) 0%, rgba(30, 41, 59, 0.08) 70%, transparent 100%);
+            box-shadow: 0 0 60px rgba(30, 41, 59, 0.2);
+            animation: float 15s infinite ease-in-out;
+        }
+
+        .bg-animation .circle:nth-child(1) {
+            width: 500px; height: 500px;
+            top: -150px; right: -100px;
+            animation-delay: 0s;
+        }
+
+        .bg-animation .circle:nth-child(2) {
+            width: 400px; height: 400px;
+            bottom: -100px; left: -100px;
+            animation-delay: 3s;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.15) 0%, rgba(15, 23, 42, 0.04) 70%, transparent 100%);
+        }
+
+        .bg-animation .circle:nth-child(3) {
+            width: 350px; height: 350px;
+            top: 40%; right: 15%;
+            animation-delay: 6s;
+        }
+
+        .bg-animation .circle:nth-child(4) {
+            width: 300px; height: 300px;
+            top: 10%; left: 20%;
+            animation-delay: 9s;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.2) 0%, rgba(30, 41, 59, 0.05) 70%, transparent 100%);
+        }
+
+        .bg-animation .circle:nth-child(5) {
+            width: 250px; height: 250px;
+            bottom: 20%; right: 30%;
+            animation-delay: 12s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            25% { transform: translate(30px, -30px) scale(1.1) rotate(5deg); }
+            50% { transform: translate(-20px, 20px) scale(0.95) rotate(-5deg); }
+            75% { transform: translate(20px, 10px) scale(1.05) rotate(3deg); }
+        }
+
+        /* Floating Tools Icons (like index.php) */
+        .floating-tools {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+            opacity: 0.8;
+            will-change: transform;
+        }
+
+        .floating-tools i {
+            position: absolute;
+            color: rgba(30, 41, 59, 0.35);
+            font-size: 2.5rem;
+            animation: floatTool 6s ease-in-out infinite;
+            text-shadow: 0 0 25px rgba(30, 41, 59, 0.4);
+        }
+
+        .floating-tools i:nth-child(1) { top: 15%; left: 8%; animation-delay: 0s; font-size: 3rem; }
+        .floating-tools i:nth-child(2) { top: 25%; right: 12%; animation-delay: 1s; font-size: 2rem; }
+        .floating-tools i:nth-child(3) { top: 45%; left: 15%; animation-delay: 2s; font-size: 2.8rem; }
+        .floating-tools i:nth-child(4) { bottom: 30%; right: 8%; animation-delay: 3s; font-size: 2.2rem; }
+        .floating-tools i:nth-child(5) { top: 60%; left: 5%; animation-delay: 4s; font-size: 2.5rem; }
+        .floating-tools i:nth-child(6) { bottom: 20%; left: 20%; animation-delay: 5s; font-size: 2rem; }
+        .floating-tools i:nth-child(7) { top: 35%; right: 5%; animation-delay: 6s; font-size: 3rem; }
+        .floating-tools i:nth-child(8) { bottom: 40%; right: 15%; animation-delay: 7s; font-size: 2.3rem; }
+
+        @keyframes floatTool {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-25px) rotate(10deg); }
+        }
+
+        /* Glassmorphism Cards - Fully Transparent with blur */
+        .card-glass {
+            background: rgba(255, 255, 255, 0.4) !important;
+            backdrop-filter: blur(15px) !important;
+            -webkit-backdrop-filter: blur(15px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.6) !important;
+            box-shadow: 0 8px 32px rgba(30, 41, 59, 0.1) !important;
+        }
+
+        .card-glass:hover {
+            background: rgba(255, 255, 255, 0.6) !important;
+            box-shadow: 0 12px 40px rgba(30, 41, 59, 0.15) !important;
+        }
+
+        /* Main content area cards transparency */
+        .main-content .card {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 4px 24px rgba(30, 41, 59, 0.1);
+            transition: all 0.3s ease;
+            color: #1e293b;
+        }
+
+        .main-content .card:hover {
+            background: rgba(255, 255, 255, 0.65);
+            box-shadow: 0 8px 32px rgba(30, 41, 59, 0.15);
+        }
+
+        /* Dark text for all content inside cards */
+        .main-content .card h1,
+        .main-content .card h2,
+        .main-content .card h3,
+        .main-content .card h4,
+        .main-content .card h5,
+        .main-content .card h6,
+        .main-content .card p,
+        .main-content .card span,
+        .main-content .card div,
+        .main-content .card label,
+        .main-content .card td,
+        .main-content .card th,
+        .main-content .card li,
+        .main-content .card small,
+        .main-content .card strong,
+        .main-content .card b,
+        .main-content .card i:not(.bi):not(.fas):not(.far),
+        .main-content .card a:not(.btn) {
+            color: #1e293b;
+        }
+
+        .main-content .card .text-muted,
+        .main-content .card .text-secondary {
+            color: rgba(30, 41, 59, 0.7) !important;
+        }
+
+        /* List groups inside cards - more transparent */
+        .card .list-group-item {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .card .list-group-item:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: transform 0.3s ease, width 0.3s ease;
+            box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .sidebar-header {
+            padding: 12px 20px;
+            border-bottom: none;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 10;
+            min-height: 60px;
+        }
+
+        .sidebar-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6 0%, #FACC15 100%);
+        }
+
+        .sidebar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            line-height: 1.2;
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar-brand:hover {
+            opacity: 0.9;
+        }
+
+        .sidebar-brand i,
+        .sidebar-brand svg {
+            color: #FACC15;
+            width: 34px;
+            height: 34px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-collapse-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #FACC15;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-collapse-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .sidebar-collapse-btn i,
+        .sidebar-collapse-btn svg {
+            color: #FACC15 !important;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .sidebar-menu::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar-menu::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+        }
+
+        .menu-section { padding: 0 20px; margin-bottom: 20px; }
+
+        .menu-title {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            padding-left: 15px;
+            position: sticky;
+            top: 0;
+            background: var(--sidebar-bg);
+            z-index: 5;
+            padding-top: 10px;
+            padding-bottom: 5px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 12px;
+            margin: 4px 15px;
+            transition: background 0.3s ease, color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: var(--accent-gradient);
+            transform: scaleY(0);
+            transition: transform 0.2s ease;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .menu-item.active {
+            background: #FACC15;
+            color: #111827 !important;
+        }
+
+        .menu-item:hover::before, .menu-item.active::before {
+            transform: scaleY(1);
+        }
+
+        .menu-item.active, .menu-item.active::before {
+            transition: none !important;
+        }
+
+        .menu-item i,
+        .menu-item svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .menu-item span { font-size: 0.85rem; font-weight: 500; }
+        .menu-title { color: rgba(255, 255, 255, 0.5); font-size: 0.75rem; font-weight: 700; }
+
+        .menu-badge {
+            margin-left: auto;
+            background: #FACC15;
+            color: #111827;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .menu-item[href*="manage_bookings.php"] .menu-badge {
+            background: #ef4444;
+            color: #ffffff;
+            padding: 1px 6px;
+            font-size: 0.65rem;
+        }
+        .menu-item[href*="admin_emergency_requests"] .menu-badge {
+            background: #ef4444;
+            color: #ffffff;
+            padding: 1px 6px;
+            font-size: 0.65rem;
+        }
+
+        /* ===== Collapsible parent menus ===== */
+        .menu-parent {
+            width: calc(100% - 30px);
+            background: none;
+            border: none;
+            font-family: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+        .menu-caret {
+            width: 15px !important;
+            height: 15px !important;
+            margin-left: auto;
+            transition: transform 0.25s ease;
+            flex-shrink: 0;
+        }
+        .menu-parent .menu-badge + .menu-caret { margin-left: 0; }
+        .menu-parent.open .menu-caret { transform: rotate(180deg); }
+        .menu-parent.child-active {
+            background: rgba(255, 255, 255, 0.08);
+            color: #FACC15;
+        }
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .submenu.open { max-height: 300px; }
+        .submenu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 20px 9px 52px;
+            margin: 2px 15px;
+            color: rgba(255, 255, 255, 0.75);
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: background 0.2s ease, color 0.2s ease;
+            position: relative;
+        }
+        .submenu-item::before {
+            content: '';
+            position: absolute;
+            left: 34px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.35);
+        }
+        .submenu-item:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+        .submenu-item.active { background: #FACC15; color: #111827 !important; }
+        .submenu-item.active::before { background: #111827; }
+
+        /* ===== Sub-group titles inside a section ===== */
+        .menu-subtitle {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 10px 20px 4px 20px;
+        }
+
+        /* Pulse animation removed to prevent sidebar flicker */
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid rgba(30, 41, 59, 0.1);
+            background: #ffffff;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 10;
+            margin-top: auto;
+        }
+
+        .sidebar-footer-text {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #111827;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-footer-text i,
+        .sidebar-footer-text svg {
+            color: #FACC15;
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-footer-copyright {
+            text-align: center;
+            color: rgba(30, 41, 59, 0.5);
+            font-size: 0.65rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .user-profile:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .user-avatar {
+            width: 45px; height: 45px;
+            background: #1e3a5f;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .user-info { flex: 1; min-width: 0; line-height: 1.2; }
+        .user-name {
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .user-role { color: rgba(255, 255, 255, 0.5); font-size: 0.75rem; }
+
+        .btn-logout-sm {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            padding: 5px;
+            transition: color 0.3s ease, transform 0.2s ease;
+            flex-shrink: 0;
+        }
+        .btn-logout-sm:hover {
+            color: var(--danger);
+            transform: scale(1.1);
+        }
+
+        /* Main Content */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+            background: transparent;
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        .top-header {
+            background: #ffffff;
+            padding: 12px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            right: 0;
+            z-index: 100;
+            border-bottom: 2px solid rgba(30, 58, 95, 0.3);
+            overflow: visible;
+            height: 60px;
+            transition: left 0.3s ease;
+        }
+
+        .top-header::after { display: none; }
+
+        .top-header .page-title,
+        .top-header .text-muted {
+            color: #111827 !important;
+        }
+
+        .top-header .page-title i {
+            color: #FACC15 !important;
+        }
+
+        .top-header .btn-toggle-sidebar {
+            color: #111827 !important;
+        }
+
+        .page-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            line-height: 1.2;
+        }
+        .page-title i { color: var(--accent-color); }
+
+        /* Smaller admin header user text */
+        .top-header .user-name { font-size: 0.8rem; }
+        .top-header .user-role { font-size: 0.7rem; }
+
+        /* Admin user dropdown (same design as customer) */
+        .header-user-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 12px;
+            transition: background 0.3s ease;
+            z-index: 2;
+        }
+
+        .header-user-wrap:hover { background: rgba(0, 0, 0, 0.05); }
+
+        .top-bar-dropdown-btn {
+            color: var(--text-light);
+            font-size: 0.7rem;
+            transition: transform 0.3s ease;
+        }
+
+        .header-user-wrap.active .top-bar-dropdown-btn { transform: rotate(180deg); }
+
+        .header-user-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            min-width: 170px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            z-index: 1050;
+            overflow: hidden;
+        }
+
+        .header-user-wrap.active .header-user-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .header-user-dropdown .dropdown-header {
+            padding: 10px 14px;
+            background: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .header-user-dropdown .dropdown-header-name {
+            color: #1e293b;
+            font-size: 0.82rem;
+            font-weight: 600;
+            margin-bottom: 1px;
+        }
+
+        .header-user-dropdown .dropdown-header-role {
+            color: #64748b;
+            font-size: 0.68rem;
+        }
+
+        .header-user-dropdown .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            color: var(--text-dark);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .header-user-dropdown .dropdown-item:hover {
+            background: rgba(250, 204, 21, 0.1);
+            color: #FACC15;
+        }
+
+        .header-user-dropdown .dropdown-item i {
+            font-size: 1rem;
+            width: 18px;
+            text-align: center;
+        }
+
+        .header-user-dropdown .dropdown-item.danger {
+            color: #ef4444;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .header-user-dropdown .dropdown-item.danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+        }
+
+        .btn-toggle-sidebar {
+            display: block;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-dark);
+            cursor: pointer;
+            padding: 0;
+            margin-right: 15px;
+        }
+
+        .main-content {
+            padding: 60px 30px 30px 30px;
+            background: transparent;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Page fade-in animation removed to prevent navigation flicker */
+
+        /* Overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .sidebar-overlay.show { display: block; }
+
+        /* Floating icons for top header */
+        .header-floating-icons {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .header-floating-icons i {
+            position: absolute;
+            color: rgba(30, 41, 59, 0.2);
+            font-size: 1.5rem;
+            animation: floatHeader 4s ease-in-out infinite;
+        }
+
+        .header-floating-icons i:nth-child(1) { top: 20%; left: 10%; animation-delay: 0s; }
+        .header-floating-icons i:nth-child(2) { top: 30%; right: 15%; animation-delay: 0.5s; font-size: 1.2rem; }
+        .header-floating-icons i:nth-child(3) { top: 50%; left: 25%; animation-delay: 1s; font-size: 1.8rem; }
+        .header-floating-icons i:nth-child(4) { top: 40%; right: 30%; animation-delay: 1.5s; font-size: 1.3rem; }
+        .header-floating-icons i:nth-child(5) { top: 60%; left: 15%; animation-delay: 2s; font-size: 1.6rem; }
+        .header-floating-icons i:nth-child(6) { top: 25%; right: 25%; animation-delay: 2.5s; font-size: 1.4rem; }
+
+        @keyframes floatHeader {
+            0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-10px) rotate(5deg); opacity: 0.6; }
+        }
+
+        /* Responsive */
+        @media (max-width: 991px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.show { transform: translateX(0); }
+            .main-wrapper { margin-left: 0; width: 100%; }
+            .btn-toggle-sidebar { display: block; }
+            .top-header { left: 0; }
+        }
+
+        /* Scroll to top */
+        .scroll-top {
+            position: fixed;
+            bottom: 30px; right: 30px;
+            width: 45px; height: 45px;
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 99;
+            box-shadow: 0 4px 15px rgba(30, 58, 95, 0.4);
+        }
+        .scroll-top.visible { opacity: 1; visibility: visible; }
+        .scroll-top:hover { transform: translateY(-5px); }
+
+        /* --- Notification bell & dropdown (shared design) --- */
+        .admin-notifications {
+            position: relative;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            color: inherit;
+            font-size: 1.25rem;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.25s ease;
+        }
+
+        .notification-bell:hover {
+            background: rgba(148, 163, 184, 0.28);
+            transform: translateY(-1px);
+        }
+
+        .notification-bell .badge {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 2px 5px;
+            border-radius: 10px;
+            min-width: 17px;
+            text-align: center;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.45);
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: -6px;
+            width: 360px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 16px 48px rgba(15, 23, 42, 0.18), 0 4px 12px rgba(15, 23, 42, 0.08);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            z-index: 1060;
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px) scale(0.98);
+            transform-origin: top right;
+            transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+        }
+
+        .notification-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .notification-dropdown-header {
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            background: #ffffff;
+        }
+
+        .nd-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nd-count {
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+
+        .nd-link {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .nd-link:hover { text-decoration: underline; }
+
+        .notification-list {
+            max-height: 360px;
+            overflow-y: auto;
+        }
+
+        .notification-list::-webkit-scrollbar { width: 5px; }
+        .notification-list::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+
+        .notification-item {
+            padding: 12px 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+            border-bottom: 1px solid #f8fafc;
+            transition: background 0.15s ease;
+        }
+
+        .notification-item:last-child { border-bottom: none; }
+        .notification-item:hover { background: #f8fafc; }
+
+        .notification-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .notification-item.booking .notification-icon { background: rgba(59, 130, 246, 0.12); color: #3b82f6; }
+        .notification-item.emergency .notification-icon { background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+        .notification-item.warranty .notification-icon { background: rgba(139, 92, 246, 0.12); color: #8b5cf6; }
+        .notification-item.health .notification-icon { background: rgba(234, 179, 8, 0.15); color: #ca8a04; }
+
+        .notification-item-text { flex: 1; min-width: 0; }
+
+        .notification-item-title {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 2px;
+        }
+
+        .notification-item-message {
+            font-size: 0.75rem;
+            color: #64748b;
+            word-break: break-word;
+            line-height: 1.4;
+        }
+
+        .notification-item-time {
+            font-size: 0.68rem;
+            color: #94a3b8;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .notification-item-time i { font-size: 0.65rem; }
+
+        .notification-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #3b82f6;
+            margin-top: 8px;
+            flex-shrink: 0;
+        }
+
+        .notification-empty {
+            padding: 32px 20px;
+            text-align: center;
+            color: #94a3b8;
+        }
+
+        .notification-empty > i {
+            font-size: 1.8rem;
+            display: block;
+            margin-bottom: 8px;
+            color: #cbd5e1;
+        }
+
+        .notification-empty .ne-title { font-size: 0.85rem; font-weight: 600; color: #475569; }
+        .notification-empty .ne-sub { font-size: 0.72rem; margin-top: 2px; }
+
+        @media (max-width: 576px) {
+            .notification-dropdown {
+                width: calc(100vw - 24px);
+                right: -10px;
+            }
+        }
+
+        .bg-animation, .floating-tools, .header-floating-icons { display: none; }
+        /* Sidebar dark blue gradient theme / FOUC guard */
+        .sidebar { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%) !important; }
+        .sidebar-header { background: transparent !important; }
+        .menu-title { background: transparent !important; color: #ffffff !important; }
+        .menu-item { color: #ffffff !important; }
+        .menu-item:hover { color: white !important; background: rgba(255,255,255,0.1) !important; }
+        .menu-item.active { color: #111827 !important; background: #FACC15 !important; }
+        .menu-item.active::before { transform: scaleY(0) !important; }
+        .menu-item::before { background: #FACC15 !important; }
+        .sidebar-brand, .sidebar-brand span { color: white !important; }
+        .sidebar-brand i, .sidebar-brand svg { color: #FACC15 !important; }
+        .user-name { color: white !important; }
+        .user-role { color: rgba(255, 255, 255, 0.5) !important; }
+        .btn-logout-sm { color: rgba(255, 255, 255, 0.5) !important; }
+        .btn-logout-sm:hover { color: #ef4444 !important; }
+        .user-profile { background: rgba(255, 255, 255, 0.05) !important; }
+        .user-profile:hover { background: rgba(255, 255, 255, 0.08) !important; }
+        .sidebar-footer { background: transparent !important; border-top: 1px solid rgba(255, 255, 255, 0.1) !important; }
+        .sidebar-footer-text { color: white !important; }
+        .sidebar-footer-copyright { color: rgba(255, 255, 255, 0.5) !important; }
+        .sidebar::-webkit-scrollbar, .sidebar-menu::-webkit-scrollbar { width: 0 !important; height: 0 !important; }
+        .sidebar, .sidebar-menu { scrollbar-width: none !important; }
+        .sidebar::-webkit-scrollbar-thumb, .sidebar-menu::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2) !important; }
+    /* Collapsible sidebar */
+    body.collapsed { --sidebar-width: 80px; }
+    body.collapsed .menu-item { justify-content: center; padding: 12px 0; margin: 4px 10px; }
+    body.collapsed .menu-item span,
+    body.collapsed .menu-title,
+    body.collapsed .menu-subtitle,
+    body.collapsed .menu-caret,
+    body.collapsed .submenu,
+    body.collapsed .menu-badge,
+    body.collapsed .sidebar-brand span,
+    body.collapsed .user-info,
+    body.collapsed .btn-logout-sm { display: none; }
+    body.collapsed .user-avatar { width: 35px; height: 35px; font-size: 1rem; }
+    body.collapsed .user-profile { padding: 10px; justify-content: center; }
+    body.collapsed .sidebar-footer { padding: 10px; }
+    body.collapsed .sidebar-footer-text span,
+    body.collapsed .sidebar-footer-copyright { display: none; }
+    </style>
+    <script>
+        function confirmLogout() {
+            Swal.fire({
+                title: 'Logout?',
+                text: 'You will be logged out.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, Logout',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = 'logout.php';
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+    </div>
+
+    <!-- Floating Tools Icons (like index.php) -->
+    <div class="floating-tools">
+        <i class="bi bi-tools"></i>
+        <i class="bi bi-wrench"></i>
+        <i class="bi bi-gear"></i>
+        <i class="bi bi-car-front"></i>
+        <i class="bi bi-speedometer2"></i>
+        <i class="bi bi-people-fill"></i>
+        <i class="bi bi-calendar-check"></i>
+        <i class="bi bi-clipboard-check"></i>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="dashboard_admin.php" class="sidebar-brand">
+                <i data-lucide="motorbike" style="width: 34px; height: 34px;"></i>
+                <span style="white-space: nowrap; font-size: 1rem; line-height: 1.2;">
+                    Mindanao Eversure
+                    <small style="display: block; font-size: .55rem; letter-spacing: .12em; white-space: nowrap; color: #FACC15; line-height: 1;">MOTORCYCLE SERVICE</small>
+                </span>
+            </a>
+            <button class="sidebar-collapse-btn" id="sidebarCollapseBtn" title="Toggle Sidebar">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+        </div>
+
+        <nav class="sidebar-menu">
+            <?php
+                $bookingsActive = in_array($currentPage, ['manage_bookings', 'bookings_status'], true);
+                $emergencyActive = in_array($currentPage, ['admin_emergency_requests', 'emergency_status'], true);
+            ?>
+            <div class="menu-section">
+                <div class="menu-title">Main Menu</div>
+                <a href="dashboard_admin.php" class="menu-item <?= $currentPage == 'dashboard_admin' ? 'active' : '' ?>">
+                    <i data-lucide="layout-dashboard"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <button type="button" class="menu-item menu-parent <?= $bookingsActive ? 'child-active open' : '' ?>" data-submenu="submenuBookings" data-href="manage_bookings.php">
+                    <i data-lucide="calendar-check"></i>
+                    <span>Bookings</span>
+                    <?php if ($pendingCount > 0): ?>
+                        <span class="menu-badge"><?= $pendingCount ?></span>
+                    <?php endif; ?>
+                    <i data-lucide="chevron-down" class="menu-caret"></i>
+                </button>
+                <div class="submenu <?= $bookingsActive ? 'open' : '' ?>" id="submenuBookings">
+                    <a href="manage_bookings.php" class="submenu-item <?= $currentPage == 'manage_bookings' ? 'active' : '' ?>">
+                        <span>Bookings</span>
+                    </a>
+                    <a href="bookings_status.php" class="submenu-item <?= $currentPage == 'bookings_status' ? 'active' : '' ?>">
+                        <span>Bookings Status</span>
+                    </a>
+                </div>
+
+                <button type="button" class="menu-item menu-parent <?= $emergencyActive ? 'child-active open' : '' ?>" data-submenu="submenuEmergency" data-href="admin_emergency_requests.php">
+                    <i data-lucide="siren"></i>
+                    <span>Emergency</span>
+                    <?php if ($emergencyCount > 0): ?>
+                        <span class="menu-badge"><?= $emergencyCount ?></span>
+                    <?php endif; ?>
+                    <i data-lucide="chevron-down" class="menu-caret"></i>
+                </button>
+                <div class="submenu <?= $emergencyActive ? 'open' : '' ?>" id="submenuEmergency">
+                    <a href="admin_emergency_requests.php" class="submenu-item <?= $currentPage == 'admin_emergency_requests' ? 'active' : '' ?>">
+                        <span>Emergency</span>
+                    </a>
+                    <a href="emergency_status.php" class="submenu-item <?= $currentPage == 'emergency_status' ? 'active' : '' ?>">
+                        <span>Emergency Status</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="menu-section">
+
+                <div class="menu-subtitle">Fleet &amp; Customers</div>
+                <a href="manage_customers_motorcycles.php" class="menu-item <?= $currentPage == 'manage_customers_motorcycles' ? 'active' : '' ?>">
+                    <i data-lucide="users"></i>
+                    <span>Customers</span>
+                </a>
+                <a href="manage_motorcycles.php" class="menu-item <?= $currentPage == 'manage_motorcycles' ? 'active' : '' ?>">
+                    <i data-lucide="bike"></i>
+                    <span>Motorcycles</span>
+                </a>
+                <a href="admin_health_scores.php" class="menu-item <?= $currentPage == 'admin_health_scores' ? 'active' : '' ?>">
+                    <i data-lucide="heart-pulse"></i>
+                    <span>Health Scores</span>
+                </a>
+                <a href="admin_maintenance_history.php" class="menu-item <?= $currentPage == 'admin_maintenance_history' ? 'active' : '' ?>">
+                    <i data-lucide="history"></i>
+                    <span>Maintenance History</span>
+                </a>
+
+                <div class="menu-subtitle">Operations &amp; Staff</div>
+                <a href="manage_mechanics.php" class="menu-item <?= $currentPage == 'manage_mechanics' ? 'active' : '' ?>">
+                    <i data-lucide="wrench"></i>
+                    <span>Mechanics</span>
+                </a>
+                <a href="mechanic_assignment.php" class="menu-item <?= $currentPage == 'mechanic_assignment' ? 'active' : '' ?>">
+                    <i data-lucide="user-check"></i>
+                    <span>Assignments</span>
+                </a>
+                <a href="admin_availability.php" class="menu-item <?= $currentPage == 'admin_availability' ? 'active' : '' ?>">
+                    <i data-lucide="calendar-days"></i>
+                    <span>Availability</span>
+                </a>
+
+                <div class="menu-subtitle">Catalog &amp; Services</div>
+                <a href="services.php" class="menu-item <?= $currentPage == 'services' ? 'active' : '' ?>">
+                    <i data-lucide="settings"></i>
+                    <span>Services</span>
+                </a>
+                <a href="admin_service_packages.php" class="menu-item <?= $currentPage == 'admin_service_packages' ? 'active' : '' ?>">
+                    <i data-lucide="package"></i>
+                    <span>Service Packages</span>
+                </a>
+                <a href="admin_warranty.php" class="menu-item <?= $currentPage == 'admin_warranty' ? 'active' : '' ?>">
+                    <i data-lucide="shield-check"></i>
+                    <span>Warranty</span>
+                </a>
+                <a href="maintenance_management.php" class="menu-item <?= $currentPage == 'maintenance_management' ? 'active' : '' ?>">
+                    <i data-lucide="list-checks"></i>
+                    <span>Maintenance Rules</span>
+                </a>
+                <a href="maintenance_management.php" class="menu-item <?= $currentPage == 'maintenance_management' ? 'active' : '' ?>">
+                    <i data-lucide="clipboard-list"></i>
+                    <span>Maintenance Management</span>
+                </a>
+            </div>
+
+            <div class="menu-section">
+                <div class="menu-title">Communication</div>
+                <a href="sms_history.php" class="menu-item <?= $currentPage == 'sms_history' ? 'active' : '' ?>">
+                    <i data-lucide="message-square"></i>
+                    <span>SMS History</span>
+                </a>
+            </div>
+            <div class="menu-section">
+                <div class="menu-title">Account</div>
+                <a href="admin_profile.php" class="menu-item <?= $currentPage == 'admin_profile' ? 'active' : '' ?>">
+                    <i data-lucide="user-cog"></i>
+                    <span>Profile Settings</span>
+                </a>
+            </div>
+        </nav>
+
+    <script>
+        (function () {
+            const sidebar = document.getElementById('sidebar');
+            const sidebarMenu = sidebar ? sidebar.querySelector('.sidebar-menu') : null;
+            const savedScrollPosition = localStorage.getItem('adminSidebarScrollPosition');
+            if (sidebarMenu && savedScrollPosition) {
+                sidebarMenu.scrollTop = parseInt(savedScrollPosition);
+            }
+        })();
+    </script>
+
+    <div class="sidebar-footer">
+        <div class="sidebar-footer-text">
+            <i data-lucide="motorbike" style="width: 20px; height: 20px;"></i>
+            <span style="display:flex;flex-direction:column;line-height:1.1;">Mindanao Eversure <small style="font-size:.55rem;letter-spacing:.12em;color:#FACC15;">MOTORCYCLE SERVICE</small></span>
+        </div>
+        <div class="sidebar-footer-copyright">
+            © <?= date('Y') ?> All rights reserved
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const collapseBtn = document.getElementById('sidebarCollapseBtn');
+            if (collapseBtn) {
+                collapseBtn.addEventListener('click', function () {
+                    document.body.classList.toggle('collapsed');
+                    const icon = collapseBtn.querySelector('i');
+                    if (icon) {
+                        if (document.body.classList.contains('collapsed')) {
+                            icon.classList.remove('bi-chevron-left');
+                            icon.classList.add('bi-chevron-right');
+                        } else {
+                            icon.classList.remove('bi-chevron-right');
+                            icon.classList.add('bi-chevron-left');
+                        }
+                    }
+                });
+            }
+
+            // Collapsible parent menus
+            document.querySelectorAll('.menu-parent').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    // When sidebar is collapsed, navigate to the first child page
+                    if (document.body.classList.contains('collapsed')) {
+                        const href = btn.getAttribute('data-href');
+                        if (href) window.location.href = href;
+                        return;
+                    }
+                    const submenu = document.getElementById(btn.getAttribute('data-submenu'));
+                    if (submenu) {
+                        submenu.classList.toggle('open');
+                        btn.classList.toggle('open');
+                    }
+                });
+            });
+
+            // Admin notification bell
+            const notifWrapper = document.getElementById('adminNotifWrapper');
+            const notifBell = document.getElementById('adminNotifBell');
+            const notifDropdown = document.getElementById('adminNotifDropdown');
+
+            if (notifWrapper && notifBell && notifDropdown) {
+                notifBell.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    notifDropdown.classList.toggle('show');
+
+                    const badge = document.getElementById('adminNotifBadge');
+                    if (badge) {
+                        fetch('mark_admin_notifications_read.php', {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        }).then(function (res) {
+                            if (res.ok) badge.style.display = 'none';
+                        }).catch(function (err) {
+                            console.error('mark admin notifications read failed', err);
+                        });
+                    }
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!notifWrapper.contains(e.target)) {
+                        notifDropdown.classList.remove('show');
+                    }
+                });
+            }
+
+            // Admin user dropdown (same behavior as customer)
+            const adminUserWrap = document.getElementById('adminUserWrap');
+            if (adminUserWrap) {
+                adminUserWrap.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    adminUserWrap.classList.toggle('active');
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!adminUserWrap.contains(e.target)) {
+                        adminUserWrap.classList.remove('active');
+                    }
+                });
+            }
+        });
+    </script>
+
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+        <!-- Top Header -->
+        <header class="top-header">
+            <!-- Floating Icons -->
+            <div class="header-floating-icons">
+                <i class="bi bi-gear"></i>
+                <i class="bi bi-wrench"></i>
+                <i class="bi bi-tools"></i>
+                <i class="bi bi-car-front"></i>
+                <i class="bi bi-speedometer2"></i>
+                <i class="bi bi-calendar-check"></i>
+            </div>
+            <button class="btn-toggle-sidebar" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+            <h1 class="page-title">
+                <i class="bi bi-speedometer2"></i>
+                <?= isset($pageTitle) ? $pageTitle : 'Admin' ?>
+            </h1>
+            <!-- Admin Notification Bell -->
+            <div class="admin-notifications ms-auto" id="adminNotifWrapper">
+                <div class="notification-bell" id="adminNotifBell" title="Notifications">
+                    <i class="bi bi-bell-fill"></i>
+                    <?php if ($adminNotificationCount > 0): ?>
+                        <span class="badge" id="adminNotifBadge"><?= $adminNotificationCount ?></span>
+                    <?php endif; ?>
+                </div>
+                <div class="notification-dropdown" id="adminNotifDropdown">
+                    <div class="notification-dropdown-header">
+                        <div class="nd-title">
+                            Notifications
+                            <?php if ($adminNotificationCount > 0): ?>
+                                <span class="nd-count"><?= $adminNotificationCount ?> new</span>
+                            <?php endif; ?>
+                        </div>
+                        <a href="dashboard_admin.php" class="nd-link">Dashboard</a>
+                    </div>
+                    <div class="notification-list">
+                        <?php if (!empty($adminNotificationItems)): ?>
+                            <?php foreach ($adminNotificationItems as $item): ?>
+                                <a href="<?= htmlspecialchars($item['link']) ?>" class="notification-item <?= htmlspecialchars($item['type']) ?>">
+                                    <div class="notification-icon"><i class="bi <?= $adminNotifIcons[$item['type']] ?? 'bi-bell' ?>"></i></div>
+                                    <div class="notification-item-text">
+                                        <div class="notification-item-title"><?= htmlspecialchars($item['title']) ?></div>
+                                        <div class="notification-item-message"><?= htmlspecialchars($item['message']) ?></div>
+                                        <?php if (!empty($item['time_label'])): ?>
+                                            <div class="notification-item-time"><i class="bi bi-clock"></i><?= htmlspecialchars($item['time_label']) ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <span class="notification-dot"></span>
+                                </a>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <div class="notification-empty">
+                                <i class="bi bi-bell-slash"></i>
+                                <div class="ne-title">All caught up</div>
+                                <div class="ne-sub">No new notifications right now</div>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            <div class="header-user-wrap d-none d-md-flex" id="adminUserWrap">
+                <div class="user-avatar">
+                    <?= strtoupper(substr($adminName, 0, 1)) ?>
+                </div>
+                <div class="user-info text-end">
+                    <div class="user-name"><?= htmlspecialchars($adminName) ?></div>
+                    <div class="user-role">Administrator</div>
+                </div>
+                <i class="bi bi-chevron-down top-bar-dropdown-btn"></i>
+                <div class="header-user-dropdown">
+                    <div class="dropdown-header">
+                        <div class="dropdown-header-name"><?= htmlspecialchars($adminName) ?></div>
+                        <div class="dropdown-header-role">Administrator</div>
+                    </div>
+                    <a href="admin_profile.php" class="dropdown-item">
+                        <i class="bi bi-person-gear"></i>
+                        <span>Profile Settings</span>
+                    </a>
+                    <div class="dropdown-item danger" onclick="confirmLogout()">
+                        <i class="bi bi-box-arrow-right"></i>
+                        <span>Logout</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+<?php include __DIR__ . '/floating_toast.php'; ?>

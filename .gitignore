@@ -1,0 +1,17 @@
+# Secrets
+sms_config.php
+
+# User-uploaded content
+uploads/
+
+# Backup files
+*.bak
+*.bak2
+*.backup
+
+# One-off scratch/migration scripts
+_*
+
+# OS junk
+Thumbs.db
+.DS_Store

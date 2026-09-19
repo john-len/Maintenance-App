@@ -1,0 +1,267 @@
+CHAPTER I
+INTRODUCTION
+Rationale of the Study
+Motorcycle maintenance is important in keeping motorcycles safe, reliable, and suitable for everyday use. As motorcycle use continues to be part of daily transportation, proper servicing is needed to prevent maintenance problems and unexpected breakdowns. However, motorcycle service operations may still involve manual scheduling, long waiting times, and difficulties in monitoring maintenance records. A study by Bondad et al. (2023) developed MotorCycleApp to help motorcycle owners find available mechanics and send service requests, showing how digital technology can improve access to motorcycle repair and maintenance services. Similarly, Farizqi et al. (2024) developed an Android-based motorcycle service booking application that allowed customers to select their preferred service schedule and helped reduce the need to wait at the workshop. These studies show the usefulness of digital systems in improving motorcycle service transactions. The proposed study is also related to Sustainable Development Goal 9 (SDG 9): Industry, Innovation and Infrastructure, particularly in the use of technology and innovation to improve industry and service operations. The United Nations identifies SDG 9 as promoting inclusive and sustainable industrialization and fostering innovation. 1st supporting rrl na base on the feature and sdg explaining the system 
+2nd para kay explaination sa process nila karon . In the proposed system, customers will be able to use the web-based platform to manage their motorcycle service needs without relying entirely on manual transactions. The customer can access the system, view the motorcycle's maintenance and warranty information, select the needed service, and choose an available date, time slot, and mechanic. The system will also provide maintenance and warranty reminders through SMS to help customers remember their scheduled services. On the dealership side, staff can manage customer and motorcycle records, service schedules, maintenance information, and other after-sales service activities. After a service is completed, the maintenance record can be updated so that the customer can view the motorcycle's service history and upcoming maintenance needs. This workflow is related to the approach used by Farizqi et al. (2024), where customers could select their preferred service schedule through a digital booking application and service providers could manage the submitted bookings.
+ Mindanao Eversure Corporation, specifically its motorcycle after-sales service operations, does not have an automated Motorcycle Service Scheduling and Monitoring System to ensure the efficiency and accuracy of managing motorcycle maintenance and customer after-sales services. These are the following problems that Mindanao Eversure Corporation is currently experiencing: (1) the absence of an automated maintenance reminder system can cause customers to miss their scheduled preventive maintenance and warranty service dates, resulting in delayed servicing that may affect motorcycle performance and warranty validity; (2) customers who experience sudden motorcycle breakdowns have no immediate and formal channel to alert the dealership, as existing phone and walk-in based processes are often delayed, unanswered outside business hours, and difficult to coordinate when the customer is stranded, resulting in prolonged response times, increased safety risk, and reduced customer trust in the dealership's after-sales service; (3) the absence of an organized service scheduling and selection system can make it difficult for customers to conveniently choose service types, available dates, time slots, and mechanics, resulting in manual booking processes, scheduling conflicts, longer waiting times, and inefficient service coordination; (4) customers have a lack of ways to understand the motorcycle's overall condition, as maintenance history, mileage, inspection results, and overdue services are not consolidated into a single indicator, forcing reliance on staff's verbal assessment and leading to overlooked maintenance needs, delayed repairs, and increased risk of unexpected breakdowns; and lastly, (5) the manual preparation of maintenance reports and service records can cause delays and inaccuracies in monitoring maintenance activities, customer return rates, and dealership performance, resulting in slower decision-making.
+To address these concerns, the researchers propose the development of the Motorcycle Service Scheduling and Monitoring System for Mindanao Eversure Corporation. The proposed web-based system is designed to provide automated SMS reminders for preventive maintenance and warranty schedules, organized service scheduling and selection, motorcycle maintenance monitoring, warranty management, customer service history, and maintenance reports and analytics. Through these functions, the system aims to help customers keep track of their motorcycle maintenance while allowing dealership staff to manage service activities and records in a more organized manner. The proposed system will integrate these services into one platform instead of handling them through separate manual processes. In this way, the system is expected to help reduce missed maintenance schedules, improve service coordination, minimize errors in record management, and support more efficient after-sales service operations at Mindanao Eversure Corporation. Add explainations about the benefits of the features
+Objectives of the Study
+General Objectives
+1 para explain the overall object based on the feature
+Specific Objectives 
+Subfeature na gi add sa panel e connect sa mga same na features or module naa sa inyong system
+To be able to develop an Automated SMS Maintenance and Warranty Notification Module that reminds customers of their scheduled preventive maintenance, required service intervals, and warranty expiration dates, helping reduce missed maintenance schedules and ensuring timely motorcycle servicing.
+To be able to develop an Emergency Service Request feature that allows customers to submit urgent motorcycle service requests for unexpected breakdowns and enables the dealership to respond promptly.
+ To be able to develop a Service Scheduling and Selection feature that allows customers to select their preferred service, available date, time slot, and mechanic based on service availability, reducing manual booking, scheduling conflicts, and customer waiting time while improving the organization of dealership service operations.
+ To be able to develop a Motorcycle Health Score feature that evaluates maintenance history, mileage, inspection results, and overdue services to help customers monitor their motorcycle's overall condition and maintenance needs. 
+To be able to develop a Maintenance Analytics and Reporting Dashboard that automatically generates maintenance reports and analytical summaries, enabling management to monitor maintenance activities, customer return rates, frequently performed services, and overall dealership performance for faster and more accurate decision-making.
+Scope and Limitations of the Study
+Scope of the Study
+The Senior Citizen Management Support System is capable of the following functionalities:
+Name of features
+Automated SMS Maintenance and Warranty Notification
+The system aims to remind customers about their upcoming preventive maintenance, required service intervals, and warranty expiration dates to reduce missed service schedules and encourage timely motorcycle servicing. It monitors the maintenance and warranty information of each registered motorcycle and automatically sends SMS notifications to the corresponding customer when a scheduled maintenance service or warranty expiration date is approaching, helping customers stay informed and maintain their motorcycles regularly.
+ Emergency Service Request
+The system aims to provide customers with a formal and accessible channel for requesting immediate assistance when their motorcycle experiences an unexpected breakdown or critical mechanical problem. It allows customers to submit an emergency service request by providing details about the motorcycle's problem and, optionally, their current location. Dealership staff can then view, manage, and respond to the submitted requests, allowing the dealership to coordinate assistance more efficiently and reduce delays in responding to customers experiencing motorcycle emergencies.
+Service Scheduling and package customization
+The system aims to provide customers with a convenient and organized method for selecting motorcycle services and scheduling appointments while reducing manual booking, scheduling conflicts, and customer waiting time. It allows customers to select their preferred service, available date, time slot, and mechanic based on the dealership's current service availability. Before confirming an appointment, the system checks the availability of the selected service and mechanic to prevent overlapping schedules and ensure that the appointment can be properly accommodated by the dealership. Add the 
+Mechanic Availability Matching
+ Motorcycle Health Score
+The system aims to help customers understand the overall maintenance condition of their motorcycle and identify potential maintenance needs. It evaluates relevant motorcycle information, including maintenance history, mileage, inspection results, and overdue services, and uses these factors to calculate an overall health score. The generated score provides customers with a simplified indication of their motorcycle's current condition, helping them recognize whether their motorcycle may require immediate or upcoming maintenance.
+ Maintenance Analytics and Reporting
+The system aims to provide management with accurate and organized information for monitoring maintenance activities, customer visits, frequently performed services, customer retention, and overall dealership performance. It collects and processes service and maintenance records and automatically generates reports, summaries, and analytical information that can be reviewed by management. These reports help management identify service trends, evaluate dealership operations, monitor customer return rates, and support faster and more informed decision-making.
+Limitation of the Study
+The study is limited to the development of a web-based Motorcycle Service Scheduling and Monitoring System for Mindanao Eversure Corporation in Tupi, South Cotabato, focusing on preventive maintenance reminders, emergency service requests, service scheduling and selection, motorcycle health assessment, and maintenance analytics and reporting. The system is intended only for motorcycles serviced by the dealership and does not cover other types of vehicles or services outside the dealership's after-sales operations. The system does not perform actual motorcycle diagnosis, repair, or physical inspection, as these activities remain the responsibility of qualified dealership personnel. In addition, emergency service requests depend on the availability and response of dealership staff, while SMS notifications depend on the availability of the integrated SMS service and mobile network connectivity. The study does not include online payment processing, spare-parts inventory management, or real-time motorcycle tracking. Add all limitation 
+Significance of the Study
+Significance what is the importance nganong gipili Ninyo na system and ang importance sa feature na inyong gi himo. 1 para only Significance of the Study The Motorcycle Service Scheduling and Monitoring System for Mindanao Eversure Corporation supports Sustainable Development Goal (SDG) 9: Industry, Innovation and Infrastructure, which promotes innovation and improved systems through technology. The study is significant because it provides a digital platform that improves motorcycle maintenance scheduling, customer service, monitoring, and reporting. The system benefits the following: 
+Customers 
+The system helps customers receive maintenance and warranty reminders, request emergency assistance, schedule services, and monitor their motorcycle's maintenance information. 
+Dealership Staff 
+The system helps staff manage customer records, motorcycle information, appointments, maintenance schedules, and service requests more efficiently.
+Mindanao Eversure Corporation 
+The system helps improve after-sales service operations, reduce manual processes, and provide more organized and efficient customer service. 
+Researchers 
+The study helps researchers apply their knowledge and skills in system development, database management, and information technology while providing a reference for future related studies.
+Conceptual Framework
+Figure 1
+Conceptual Framework
+Student Information Enrollment Records Academic Records Attendance Data User Requirements Development ToolsBased on the features main  pano naga work si featureEx.  Get Automated SMS Maintenance and Warranty NotificationRequirements Analysis System Design System Development Database Creation System Testing and EvaluationFunctional Student Information System Developed System Modules System Documentation Evaluation ResultsStudent Information Enrollment Records Academic Records Attendance Data User Requirements Development ToolsBased on the features main  pano naga work si featureEx.  Get Automated SMS Maintenance and Warranty NotificationRequirements Analysis System Design System Development Database Creation System Testing and EvaluationFunctional Student Information System Developed System Modules System Documentation Evaluation ResultsINPUTPROCESS         OUTPUT
+Student Information 
+Enrollment Records 
+Academic Records 
+Attendance Data 
+User Requirements 
+Development Tools
+Based on the features main  pano naga work si feature
+Ex.  Get Automated SMS Maintenance and Warranty Notification
+Requirements Analysis 
+System Design 
+System Development 
+Database Creation 
+System Testing and Evaluation
+Functional Student Information System 
+Developed System Modules 
+System Documentation 
+Evaluation Results
+Student Information 
+Enrollment Records 
+Academic Records 
+Attendance Data 
+User Requirements 
+Development Tools
+Based on the features main  pano naga work si feature
+Ex.  Get Automated SMS Maintenance and Warranty Notification
+Requirements Analysis 
+System Design 
+System Development 
+Database Creation 
+System Testing and Evaluation
+Functional Student Information System 
+Developed System Modules 
+System Documentation 
+Evaluation Results
+1 paragraph description below the diagram
+Definition of Terms 
+Automated SMS Notification – A system function that automatically sends text messages to customers regarding upcoming motorcycle maintenance schedules and warranty expiration dates.
+Customer Portal – An online section of the system where customers can access their motorcycle information, maintenance records, schedules, and warranty status.
+Emergency Service Request – A system function that allows customers to report unexpected motorcycle breakdowns or critical mechanical problems and request assistance from the dealership.
+Maintenance Analytics – The process of analyzing collected maintenance and service data to identify trends, customer visits, frequently performed services, and dealership performance.
+Maintenance History – A record of previous maintenance services, inspections, repairs, and other service activities performed on a motorcycle.
+Maintenance Schedule – The planned dates or intervals when a motorcycle should undergo preventive maintenance or required servicing.
+Motorcycle Health Score – A calculated indicator that represents the overall maintenance condition of a motorcycle based on factors such as mileage, maintenance history, inspection results, and overdue services.
+Preventive Maintenance – Regular motorcycle servicing performed at scheduled intervals to maintain performance and help prevent unexpected mechanical problems.
+Service Scheduling – The process of selecting and organizing a motorcycle service appointment based on the available service, date, time slot, and mechanic.
+Warranty Monitoring – The process of tracking the warranty status and expiration date of a customer's motorcycle to help ensure that warranty-related services are not missed.
+CHAPTER II
+REVIEW OF RELATED LITERATURE AND STUDIES
+This chapter presents the related literature and studies relevant to the development of the Motorcycle Service Scheduling and Monitoring System for Mindanao Eversure Corporation. The reviewed sources provide information on digital motorcycle service scheduling, preventive maintenance monitoring, emergency service management, customer service, and maintenance analytics. These references establish the need for a centralized system that can improve motorcycle after-sales service operations and address the identified problems of the dealership.
+Review of Related Literature
+Tana na Foreign Literature and studies
+1 litera
+1 studies
+synthesis
+Ang title  is based sa gi kuha na rrl walay title na foreign literature
+Tana na local Literature and studies(whole phil. And provi.)
+1 litera
+1 studies
+synthesis
+Combine ang mga same rrl ex. Service scheduling tanan na scheduling dapat naa sa isa ka rr;
+Motorcycle Service Scheduling and Digital Booking
+Recent foreign literature highlights the use of digital technologies to improve motorcycle service scheduling and customer transactions. Farizqi et al. (2024) developed an Android-based motorcycle service booking application that allows customers to schedule maintenance appointments electronically, reducing dependence on manual booking procedures. Wasis et al. (2024) similarly developed a web- and Android-based motorcycle service and maintenance application that provides online service booking and maintenance-related information. These studies demonstrate that digital scheduling can improve customer convenience, organize service appointments, and reduce scheduling difficulties. However, the systems primarily focus on booking and maintenance management and do not provide a complete dealership-based solution that also handles emergency requests, motorcycle condition assessment, automated SMS reminders, and maintenance analytics.
+Preventive Maintenance and Service Monitoring
+Preventive maintenance management has also been supported by computerized systems. Barreiro-Zambrano et al. (2026) implemented an integrated preventive maintenance management system that automatically generates maintenance schedules and service alerts for light vehicles. Similarly, Qamarina et al. (2026) developed a mobile application for vehicle maintenance and scheduling that allows users to monitor maintenance intervals, organize service records, and receive maintenance notifications. These studies show that automated monitoring and notifications can encourage timely maintenance and reduce missed service activities. However, they do not combine preventive maintenance reminders with motorcycle service scheduling, emergency service requests, motorcycle health assessment, and dealership-level maintenance reporting in one system.
+Vehicle Service Operations and Customer Assistance
+Digital systems have also been used to improve service operations and customer assistance. Sugianto et al. (2026) examined technician performance and customer waiting time in motorcycle service workshops, emphasizing the importance of efficient service operations in improving service quality. Surende Babu and Ms. N. D. (2026) proposed a Vehicle Services System that integrates service requests, maintenance management, and customer information into a centralized platform. These studies indicate that organized service requests and centralized information can improve operational efficiency and customer service. However, the reviewed systems do not specifically provide an emergency service request process combined with automated maintenance and warranty SMS notifications, service scheduling and mechanic selection, motorcycle health scoring, and maintenance analytics.
+Local Literature
+Philippine Motorcycle and Vehicle Maintenance Context
+Philippine literature also demonstrates the application of digital technologies to motorcycle and vehicle maintenance. Bondad et al. (2023) developed MotorCycleApp, a mobile application that helps motorcycle owners locate nearby mechanics and repair shops, improving access to maintenance services. Amores (2021) developed a Vehicle Maintenance and Monitoring System with a GPS tracking device that supports maintenance schedule monitoring and vehicle location tracking. Flores et al. (2023) developed a Vehicle Fixing Recommender System using user-based collaborative filtering to recommend appropriate repair services, while Sobejana (2021) developed an automated lead-acid battery detector and monitoring system for vehicles. These studies demonstrate the growing use of technology for motorcycle and vehicle maintenance, monitoring, and service assistance. However, the reviewed systems address individual maintenance concerns rather than providing an integrated dealership-based platform for service scheduling, emergency requests, automated SMS notifications, motorcycle health assessment, and maintenance reporting.
+Local Service Quality and Motorcycle Operations
+The importance of organized motorcycle service operations is further supported by local research on service quality and workplace practices. Sarita and Bautista (2025) examined occupational safety practices among motorcycle repair shops and emphasized the importance of proper procedures, organized repair operations, and effective management in maintaining service quality and workplace efficiency. Balinado et al. (2021) also found that reliable, responsive, and efficient automotive after-sales service contributes to customer satisfaction and loyalty. These findings emphasize the importance of improving service processes and customer responsiveness within motorcycle and automotive service establishments. However, these studies do not provide a system that automates customer maintenance reminders, emergency service requests, appointment scheduling, motorcycle condition assessment, and maintenance analytics.
+Relevance to Mindanao Eversure Corporation
+In the context of Mindanao Eversure Corporation in Tupi, South Cotabato, the identified problems are related to the dealership's after-sales service processes. Customers may miss preventive maintenance and warranty schedules when reminders are not automated, while customers experiencing motorcycle breakdowns may have difficulty immediately notifying the dealership through existing phone or walk-in procedures. Manual service booking can also result in scheduling conflicts, limited choices of service dates and mechanics, and longer waiting times. In addition, motorcycle maintenance information such as mileage, maintenance history, inspection results, and overdue services may not be consolidated into an understandable indicator, making it difficult for customers to recognize their motorcycle's maintenance condition. Manual preparation of maintenance records and reports may also delay management's ability to monitor service activities and dealership performance.
+Research Gaps and Limitations
+The reviewed literature shows that existing systems provide useful solutions for individual motorcycle and vehicle service concerns, particularly digital booking, preventive maintenance scheduling, service monitoring, and customer assistance. However, these solutions remain fragmented and do not provide a single web-based system specifically designed for the after-sales service operations of a motorcycle dealership. The proposed system addresses these gaps through five integrated features: Automated SMS Maintenance and Warranty Notification to reduce missed maintenance and warranty schedules; Emergency Service Request to provide customers with a formal channel for reporting motorcycle breakdowns and requesting assistance; Service Scheduling and Selection to organize appointments based on service, date, time slot, and mechanic availability; Motorcycle Health Score to provide an understandable assessment based on mileage, maintenance history, inspection results, and overdue services; and Maintenance Analytics and Reporting to provide management with organized information for monitoring maintenance activities, customer visits, service trends, and dealership performance. Therefore, the proposed system provides a more comprehensive approach to motorcycle after-sales service management by integrating these functions into one centralized web-based platform for Mindanao Eversure Corporation, Tupi, South Cotabato.
+CHAPTER III
+RESEARCH METHODOLOGY AND DESIGN
+This chapter presents the methodology and design used by the researchers in developing the proposed system. It describes the research environment, software development methodology, system development phases, and design tools used throughout the development process. It also covers the system’s functional requirements, database design, network design, technology stack, and project development activities.
+Environment
+The study will be conducted at Mindanao Eversure Corporation, Tupi, South Cotabato, Philippines. The organization serves as the study environment where the researchers will identify the existing processes related to motorcycle maintenance, service scheduling, customer service, and maintenance monitoring. The environment provides the necessary setting for determining the requirements and developing a web-based system suited to the needs of the dealership, its customers, dealership staff, and management.
+Software Development Methodology
+The Rapid Application Development (RAD) Model will be used as the software development methodology for the proposed system because it emphasizes rapid prototyping, continuous user feedback, and iterative improvement. It consists of four phases: Requirements Planning, where the researchers identify the dealership’s problems and system requirements; User Design, where the system interface, workflow, and database are designed and refined based on feedback; Construction, where the proposed system is programmed, integrated, and tested; and Cutover, where the completed system undergoes final testing, user evaluation, corrections, and deployment. This methodology is relevant because it allows the researchers to continuously improve the system while developing its service scheduling, maintenance monitoring, emergency service request, motorcycle condition monitoring, automated notification, and reporting functions. 
+Feature 2
+Rapid Application Development Methodology
+System Development Phases
+Requirements Planning
+In this phase, the researchers identify and analyze the existing processes, problems, and requirements of Mindanao Eversure Corporation related to motorcycle maintenance and after-sales services. The researchers gather information about customer service, maintenance schedules, service appointments, emergency requests, motorcycle records, and reporting procedures. The output of this phase is a set of documented system requirements that will serve as the basis for designing the proposed system.
+User Design
+Tatlo pud base sa diagram
+In this phase, the researchers develop the initial system design based on the identified requirements. This includes designing the user interface, system workflows, database structure, and system functions, followed by reviewing and refining the designs based on feedback. The output is an approved system prototype and design that will guide the development of the proposed system.
+Construction
+In this phase, the researchers transform the approved designs and requirements into a functional web-based system. The researchers develop the interface, program the system functions, create the database, integrate the SMS service, and conduct testing to identify and correct errors. The output is a working version of the proposed Motorcycle Service Scheduling and Monitoring System.
+Cutover
+In this phase, the completed system undergoes final testing and evaluation to ensure that its functions operate according to the identified requirements. Necessary corrections and improvements are applied before the system is prepared for implementation and use by the intended users. The output is a finalized and functional system ready for deployment at Mindanao Eversure Corporation.
+Functional Decomposition Diagram
+FEATURE WALAY USER
+Level 0 — System/Root Name Motorcycle Service Scheduling and Monitoring System for Mindanao Eversure Corporation
+Level 1 — Major Functions/Modules
+Automated SMS Maintenance and Warranty Notification
+Emergency Service Request
+Service Scheduling and Selection
+Motorcycle Health Score
+Maintenance Analytics and Reporting
+Level 2 — Sub-functions/Sub-modules
+Automated SMS Maintenance and Warranty Notification 1.1 Preventive Maintenance Reminder Dispatch 1.2 Warranty Expiration Alert Dispatch 1.3 Required Service Interval Notification 1.4 SMS Template Configuration 1.5 Notification Scheduling and History Tracking
+Emergency Service Request 2.1 Emergency Request Intake 2.2 Breakdown Details and Location Capture 2.3 Request Priority Classification 2.4 Mechanic Dispatch and Assignment 2.5 Emergency Status Tracking and Updates
+Service Scheduling and Selection 3.1 Service Catalog and Options Presentation 3.2 Mechanic Availability Verification 3.3 Time Slot and Date Selection 3.4 Appointment Booking and Confirmation 3.5 Schedule Conflict Prevention 3.6 Appointment Rescheduling and Cancellation
+Motorcycle Health Score 4.1 Health Score Calculation 4.2 Maintenance History Integration 4.3 Mileage and Service Interval Analysis 4.4 Inspection Result Processing 4.5 Overdue Service Detection 4.6 Condition Status Reporting
+Maintenance Analytics and Reporting 5.1 Maintenance Trend Analysis 5.2 Customer Visit Tracking 5.3 Frequently Performed Service Summary 5.4 Dealership Performance Reporting 5.5 Report Generation and Export
+Use Case Matrix
+GENERAL CHARACTERISTICS
+Intent
+To identify the purpose of the features of the Motorcycle Service Scheduling and Monitoring System for Mindanao Eversure Corporation.
+Scope
+The scope of this use case matrix focuses on the Mindanao Eversure Corporation service center and its staff, providing details of the functionalities they need to manage motorcycle service data, scheduling, and after-sales support efficiently.
+Level
+Administrative
+Author
+Fernando, Jhon Allen; Obispado, Dave Brian; Tejero, TR Niel Klent
+Last Update
+August 26, 2026
+Status
+Incomplete
+Primary Actor
+ Customer / Staff ADMIN 
+Precondition 
+None
+<Dynamic Precondition>
+The staff must explore the system to familiarize themselves with all the functions and processes for running the system without encountering issues.
+Assumptions
+All the dynamic preconditions are already functioning successfully.
+Triggers Event
+Manage Service Scheduling and Selection
+Manage Automated SMS Maintenance and Warranty Notification
+Manage Emergency Service Request
+Manage Motorcycle Health Score
+Manage Maintenance Analytics and Reporting
+Success Post Condition
+After the staff created their account, the customer can log into their accounts, and all system features and functions related to motorcycle service scheduling, health monitoring, and after-sales service management are running successfully, addressing the identified issues.
+Basic Flow
+Customer/Staff logs into the system. Selects the desired module (e.g., 
+OPEN Manage Service Scheduling, 
+ADD TIME
+Manage Emergency Service Request). Performs the relevant action (e.g., schedule a service, submit an emergency request). The system validates the data and updates the records. The system notifies confirmation of successful completion or prompts for corrections. 
+FLOW BASE SA FEATURE FUNCTION MAIN BUTTONS
+Failed Post Condition
+System is still on process. PARA MATAPOS SI SYSTEM UNSA ANG HIMOON
+<Model>
+Use Case Matrix
+Operation Concepts
+The Motorcycle Service Scheduling and Monitoring System automates the management of motorcycle service data, the processing of service appointments, tracking of motorcycle health, filtering eligible service schedules, and generating reports. Staff manage customer and motorcycle records, update statuses, and track service completion. The system ensures security through role-based access control, maintaining integrity with regular backups and updates. By automating these processes, the system improves efficiency and reduces errors in managing motorcycle after-sales service data.
+Overview
+The use case approach for the Motorcycle Service Scheduling and Monitoring System focuses on key interactions between actors such as the customer and staff. Staff manage customer and motorcycle data, process services, update statuses, and track maintenance. This approach provides a clear, structured workflow that meets the needs of dealership staff in managing motorcycle service operations efficiently and securely.
+TANAN PROCESS ANG SECONDARY ACTOR BASE SA IYANG INTERFACE SA FEATURE 
+TANAN PROCESS ANG THIRD ACTOR BASE SA IYANG INTERFACE SA FEATURE
+GANTT CHAT RAD
+EXAMPLE DEPENDE SA KANUS A KA NAG HIMO NA WEEK 
+LEGEND
+FINISHE
+ONGOING
+TATLO NI SIYA 
+BASED SA COLOR
+MONTH
+1
+2
+3
+4
+5
+Requirements Planning
+USER DESIGN
+              PROTOTYPE 
+             TEST
+              REFINE
+Construction
+CUTOVER
+DATABASE
+ERD
+BMC
+Figure #
+imageEmailPasswordSign InlogoimageEmailPasswordSign InlogoStoryboarding of Admin Page
+image
+Email
+Password
+Sign In
+logo
+image
+Email
+Password
+Sign In
+logo
+ARIAL 8 STORY OF THE INTERFACE UNSA ABOUT ANG INTERFACE OR MODULE NA NA PARA ASA SIYA 
+USER INTERFACE
+SCREEN SHOT SA SYSTEM
+Network Design 
+The proposed Motorcycle Service Scheduling and Monitoring System for Mindanao Eversure Corporation will use a Client-Server Network with a Star Topology. The dealership will operate a Local Area Network (LAN) for staff, while customers connect through the Wide Area Network (WAN)/Internet. The web and database servers sit at the center of the star, and all client devices connect through a central router, firewall, and switch.
+USE CISCO PACKET
+Network Topology
+The proposed system will use a Star Topology with a Client-Server architecture. The central device is the Core Switch / Router, which connects all internal network components. The Firewall and Router act as the gateway to the Internet, allowing customers and staff to access the system.
+Development/Construction/Build Phase
+Technology Stack
+Figure #
+Technology Stack
+PROGRAM JDJOAHDADHHA KULANG
+List of Modules
+Automated SMS Maintenance and Warranty NotificationSends SMS reminders to customers about preventive maintenance, required service intervals, and warranty expiration dates to ensure timely servicing.
+Emergency Service RequestAllows customers to submit urgent breakdown requests and enables staff to assign, track, and respond to emergency service cases.
+Service Scheduling and SelectionAllows customers and staff to select service packages, available dates, time slots, and mechanics while preventing scheduling conflicts.
+Motorcycle Health ScoreCalculates and displays an overall health score for each motorcycle using maintenance history, mileage, inspection results, and overdue services.
+Maintenance Analytics and ReportingGenerates reports and analytics on maintenance trends, customer visits, frequently performed services, and overall dealership performance.
+  Amores, J. (2021). Vehicle maintenance and monitoring system with GPS tracking device.ResearchGate 
+  Balinado, J. R., Prasetyo, Y. T., Young, M. N., Persada, S. F., Miraja, B. A., & Perwira Redi, A. A. N. (2021). The effect of service quality on customer satisfaction in an automotive after-sales service. Journal of Open Innovation: Technology, Market, and Complexity, 7(2), 116.https://doi.org/10.3390/JOITMC7020116 
+  Barreiro-Zambrano, J., Martinez-Parrales, J., & López-Chila, R. (2026). Implementation of an integrated system for preventive maintenance management and alerts in light vehicles. Vehicles, 8(5), 100.https://doi.org/10.3390/VEHICLES8050100 
+  Bondad, R. M., Calaurian, P. H., & Tibay, E. U. (2023). Evaluating MotorCycleApp: A mobile application mechanic finder for repair and maintenance servicing. Journal of Science Engineering and Technology (JSET), 11(1), 1–20.https://doi.org/10.61569/98rtgx28 
+  Farizqi, M. R., Kalifia, A. D., & Sejati, Rr. H. P. (2024). Design of an Android-based motorcycle service booking application. International Journal Software Engineering and Computer Science (IJSECS), 4(1), 377–385.https://doi.org/10.35870/IJSECS.V4I1.2334 
+  Qamarina, N., Ballia, B., Syamimi, A., & Ghaffar, A. (2026). Mobile application for vehicle maintenance and scheduling system. Progress in Engineering Application and Technology, 7(1), 323–327.https://doi.org/10.30880/peat.2026.07.01.037 
+  Sugianto, F. H., Abryandoko, E. W., & Farahdiansari, A. P. (2026). Identification of operational performance in service operations through the evaluation of waiting time and technician performance at AHASS workshops. Jurnal Teknologi dan Manajemen, 24(1), 19–26.https://doi.org/10.52330/JTM.V24I1.463 
+  Surende Babu, Y., & Ms. N. D. (2026). Vehicle Services System.https://doi.org/10.5281/ZENODO.20027932 
+  Wasis, E., Kana, A., & Aji, A. S. (2024). Web and Android-based motorcycle service and maintenance application. International Journal Software Engineering and Computer Science (IJSECS), 4(3), 1015–1025.https://doi.org/10.35870/IJSECS.V4I3.3253 
+  Sarita & Bautista (2025). Study on occupational safety practices among motorcycle repair shops.⚠️ Important: This is cited in the revised Chapter II, but you did not provide its complete reference information. You need to supply/verify the complete title, publication/journal, volume, issue, pages, and DOI/URL before putting it in the final References.
