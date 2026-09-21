@@ -16,7 +16,7 @@ services:
       - key: DB_PASS
         sync: false
       - key: DB_SSL
-        value: "1"
+        sync: false
       - key: SMS_ENABLED
         value: "false"
       - key: SMS_API_KEY
