@@ -1,0 +1,21 @@
+.git
+.gitignore
+
+# Secrets — never bake into the image (docker/sms_config.php is used instead)
+sms_config.php
+.env
+
+# User uploads (ephemeral on Render anyway)
+uploads/
+
+# Backups and scratch files
+*.bak
+*.bak2
+*.backup
+_*
+
+# Docs/dumps not needed at runtime
+*.docx
+*.sql
+*.txt
+nul

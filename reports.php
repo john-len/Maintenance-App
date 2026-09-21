@@ -127,6 +127,7 @@ $monthlySales = array_reverse($monthlySales);
             border-radius: 5px;
         }
     </style>
+    <link rel="stylesheet" href="fonts.css">
 </head>
 <body>
 

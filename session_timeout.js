@@ -363,16 +363,7 @@
      * Logout user
      */
     function logout() {
-        // Show logout loader if available
-        const logoutLoader = document.getElementById('logoutLoader');
-        if (logoutLoader) {
-            logoutLoader.classList.add('active');
-        }
-
-        // Redirect after short delay
-        setTimeout(() => {
-            window.location.href = CONFIG.LOGOUT_URL;
-        }, 1500);
+        window.location.href = CONFIG.LOGOUT_URL;
     }
 
     /**

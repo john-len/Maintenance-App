@@ -63,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['change_password'])) {
     <style>
         body { background: #f8f9fa; }
     </style>
+    <link rel="stylesheet" href="fonts.css">
 </head>
 <body>
 <?php include 'customer_sidebar.php'; ?>

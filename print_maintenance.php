@@ -104,6 +104,7 @@ $parts = array_filter(array_map('trim', explode(',', $record['parts_replaced'] ?
             .detail-item strong, .detail-item span { font-size: 0.8rem; }
         }
     </style>
+    <link rel="stylesheet" href="fonts.css">
 </head>
 <body>
 

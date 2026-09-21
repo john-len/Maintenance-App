@@ -575,7 +575,7 @@ $totalNotificationCount = count($customerNotificationItems);
     .notification-bell {
         position: relative;
         cursor: pointer;
-        color: inherit;
+        color: var(--text-dark, #1e293b);
         font-size: 1.25rem;
         width: 40px;
         height: 40px;

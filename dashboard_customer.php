@@ -168,7 +168,7 @@ $alerts = array_slice($alerts, 0, 5);
     <title>My Dashboard | AutoCare Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="fonts.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <style>
@@ -768,217 +768,6 @@ $alerts = array_slice($alerts, 0, 5);
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
-        }
-
-        /* --- Logout Loading - Farewell Theme --- */
-        .logout-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        .logout-loader.active {
-            display: flex;
-            opacity: 1;
-        }
-
-        .logout-loader::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 80% 80%, rgba(16, 185, 129, 0.2) 0%, transparent 50%),
-                radial-gradient(circle at 20% 20%, rgba(250, 204, 21, 0.1) 0%, transparent 50%);
-        }
-
-        .logout-loader-content {
-            text-align: center;
-            color: white;
-            padding: 50px 60px;
-            border-radius: 24px;
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(16, 185, 129, 0.3);
-            box-shadow: 0 0 60px rgba(16, 185, 129, 0.2), 0 25px 50px rgba(0, 0, 0, 0.4);
-            position: relative;
-            z-index: 1;
-            min-width: 320px;
-        }
-
-        .farewell-scene {
-            position: relative;
-            width: 280px;
-            height: 140px;
-            margin: 0 auto 25px;
-            overflow: hidden;
-        }
-
-        .farewell-road {
-            position: absolute;
-            bottom: 25px;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, 
-                transparent 0%, 
-                rgba(16, 185, 129, 0.3) 20%, 
-                rgba(16, 185, 129, 0.6) 50%, 
-                rgba(16, 185, 129, 0.3) 80%, 
-                transparent 100%);
-            border-radius: 2px;
-        }
-
-        .car-driving-away {
-            font-size: 3.5rem;
-            color: var(--success);
-            position: absolute;
-            bottom: 35px;
-            left: 50%;
-            transform: translateX(-50%);
-            animation: driveAway 2.5s ease-in-out infinite;
-            filter: drop-shadow(0 5px 15px rgba(16, 185, 129, 0.4));
-        }
-
-        @keyframes driveAway {
-            0% { left: 50%; transform: translateX(-50%) scale(1); opacity: 1; }
-            50% { left: 80%; transform: translateX(-50%) scale(0.8); opacity: 0.7; }
-            100% { left: 120%; transform: translateX(-50%) scale(0.5); opacity: 0; }
-        }
-
-        .exhaust-particles {
-            position: absolute;
-            bottom: 40px;
-            left: 40%;
-            display: flex;
-            gap: 5px;
-        }
-
-        .exhaust-particle {
-            width: 8px;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 50%;
-            animation: exhaustFade 1s ease-out infinite;
-        }
-
-        .exhaust-particle:nth-child(2) { animation-delay: 0.2s; }
-        .exhaust-particle:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes exhaustFade {
-            0% { transform: translateX(0) scale(1); opacity: 0.6; }
-            100% { transform: translateX(-30px) scale(2); opacity: 0; }
-        }
-
-        .wave-goodbye {
-            position: absolute;
-            bottom: 20px;
-            right: 30px;
-            font-size: 2.5rem;
-            color: rgba(255, 255, 255, 0.8);
-            animation: wave 1s ease-in-out infinite;
-        }
-
-        @keyframes wave {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(20deg); }
-            75% { transform: rotate(-10deg); }
-        }
-
-        .session-clock {
-            position: absolute;
-            top: 20px;
-            left: 30px;
-            font-size: 2rem;
-            color: rgba(16, 185, 129, 0.3);
-            animation: clockTick 2s ease-in-out infinite;
-        }
-
-        @keyframes clockTick {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(360deg); }
-        }
-
-        .logout-loader .loader-progress-container {
-            width: 250px;
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            margin: 20px auto;
-            overflow: hidden;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .logout-loader .loader-progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #10b981, #34d399, #10b981);
-            background-size: 200% 100%;
-            border-radius: 10px;
-            width: 0%;
-            transition: width 2.5s ease-out;
-            animation: shimmer 2s linear infinite;
-        }
-
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        .logout-loader.active .loader-progress-bar {
-            width: 100%;
-        }
-
-        .logout-loader-text {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, #fff 0%, #10b981 50%, #34d399 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .logout-loader-subtext {
-            font-size: 1rem;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 15px;
-        }
-
-        .logout-stats {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin: 15px 0;
-            padding: 15px;
-            background: rgba(16, 185, 129, 0.1);
-            border-radius: 12px;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-        }
-
-        .logout-stat {
-            text-align: center;
-        }
-
-        .logout-stat-value {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: var(--success);
-        }
-
-        .logout-stat-label {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.6);
         }
 
         /* --- Motorcycle Dashboard Cards --- */
@@ -2420,38 +2209,6 @@ $alerts = array_slice($alerts, 0, 5);
     </div>
 </div>
 
-<!-- Logout Loading - Farewell Theme -->
-<div id="logoutLoader" class="logout-loader">
-    <div class="logout-loader-content">
-        <div class="farewell-scene">
-            <i class="bi bi-clock session-clock"></i>
-            <div class="farewell-road"></div>
-            <div class="exhaust-particles">
-                <div class="exhaust-particle"></div>
-                <div class="exhaust-particle"></div>
-                <div class="exhaust-particle"></div>
-            </div>
-            <i class="bi bi-car-front-fill car-driving-away"></i>
-            <i class="bi bi-hand-wave wave-goodbye"></i>
-        </div>
-        <div class="loader-progress-container">
-            <div class="loader-progress-bar"></div>
-        </div>
-        <div class="logout-stats">
-            <div class="logout-stat">
-                <div class="logout-stat-value"><i class="bi bi-check-circle-fill"></i></div>
-                <div class="logout-stat-label">Session Saved</div>
-            </div>
-            <div class="logout-stat">
-                <div class="logout-stat-value"><i class="bi bi-shield-check"></i></div>
-                <div class="logout-stat-label">Secured</div>
-            </div>
-        </div>
-        <div class="logout-loader-text">Thanks for Visiting!</div>
-        <div class="logout-loader-subtext">See you at your next service appointment</div>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     function confirmLogout() {
@@ -2465,16 +2222,7 @@ $alerts = array_slice($alerts, 0, 5);
             confirmButtonText: 'Yes, Log Me Out!'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Show logout loader
-                const logoutLoader = document.getElementById('logoutLoader');
-                if (logoutLoader) {
-                    logoutLoader.classList.add('active');
-                }
-                
-                // Redirect after 2.5 seconds
-                setTimeout(() => {
-                    window.location.href = 'logout.php';
-                }, 2500);
+                window.location.href = 'logout.php';
             }
         });
     }

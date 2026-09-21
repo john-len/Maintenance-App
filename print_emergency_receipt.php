@@ -327,6 +327,7 @@ if ($group === 'completed') {
             .receipt-foot { padding: 12px 24px; }
         }
     </style>
+    <link rel="stylesheet" href="fonts.css">
 </head>
 <body>
 

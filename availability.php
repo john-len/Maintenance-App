@@ -185,6 +185,7 @@ if (!$is_admin) {
         }
         .time-slot input[type="radio"] { display: none; }
     </style>
+    <link rel="stylesheet" href="fonts.css">
 </head>
 <body>
 

@@ -5,7 +5,13 @@ require 'db.php'; // Required for admin_sidebar_template.php
 // ====================
 // Database Connection
 // ====================
-$conn = new mysqli("localhost", "root", "", "maintenance_db"); // ⬅ change DB name
+$conn = new mysqli(
+    getenv('DB_HOST') ?: "localhost",
+    getenv('DB_USER') ?: "root",
+    getenv('DB_PASS') !== false ? getenv('DB_PASS') : "",
+    getenv('DB_NAME') ?: "maintenance_db",
+    (int)(getenv('DB_PORT') ?: 3306)
+);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }

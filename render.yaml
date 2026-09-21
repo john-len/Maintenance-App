@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: maintenance-app
+    runtime: docker
+    plan: free
+    healthCheckPath: /index.php
+    envVars:
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+      - key: SMS_ENABLED
+        value: "false"
+      - key: SMS_API_KEY
+        sync: false
+      - key: SMS_SENDER_NAME
+        value: MOTOFIX
+      - key: SMS_DEBUG
+        value: "false"
