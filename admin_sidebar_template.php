@@ -1339,6 +1339,10 @@ $adminNotifIcons = [
                     <i data-lucide="heart-pulse"></i>
                     <span>Health Scores</span>
                 </a>
+                <a href="maintenance_management.php" class="menu-item <?= $currentPage == 'maintenance_management' ? 'active' : '' ?>">
+                    <i data-lucide="clipboard-list"></i>
+                    <span>Maintenance Management</span>
+                </a>
                 <a href="admin_maintenance_history.php" class="menu-item <?= $currentPage == 'admin_maintenance_history' ? 'active' : '' ?>">
                     <i data-lucide="history"></i>
                     <span>Maintenance History</span>
@@ -1370,14 +1374,6 @@ $adminNotifIcons = [
                 <a href="admin_warranty.php" class="menu-item <?= $currentPage == 'admin_warranty' ? 'active' : '' ?>">
                     <i data-lucide="shield-check"></i>
                     <span>Warranty</span>
-                </a>
-                <a href="maintenance_management.php" class="menu-item <?= $currentPage == 'maintenance_management' ? 'active' : '' ?>">
-                    <i data-lucide="list-checks"></i>
-                    <span>Maintenance Rules</span>
-                </a>
-                <a href="maintenance_management.php" class="menu-item <?= $currentPage == 'maintenance_management' ? 'active' : '' ?>">
-                    <i data-lucide="clipboard-list"></i>
-                    <span>Maintenance Management</span>
                 </a>
             </div>
 

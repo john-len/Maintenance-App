@@ -11,10 +11,99 @@ require 'db.php';
 $msg = '';
 $msg_type = '';
 
+// --- Schedule Maintenance (create booking) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['schedule_maintenance'])) {
+    $customer_id = (int) ($_POST['customer_id'] ?? 0);
+    $motorcycle_id = (int) ($_POST['motorcycle_id'] ?? 0);
+    $schedule_date = $_POST['schedule_date'] ?? '';
+    $start_time = $_POST['schedule_start_time'] ?? '';
+    $end_time = $_POST['schedule_end_time'] ?? '';
+    $service_ids = array_values(array_filter(array_map('intval', (array) ($_POST['service_ids'] ?? []))));
+    $mechanic_id = (int) ($_POST['mechanic_id'] ?? 0);
+    $total_price = $_POST['total_price'] ?? 0;
+
+    if (empty($customer_id) || empty($motorcycle_id) || empty($schedule_date) || empty($start_time) || empty($service_ids)) {
+        $msg = '❌ Please fill in all required fields.';
+        $msg_type = 'danger';
+    } else {
+        // End time is derived from the total duration of the selected services
+        $dur_stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(duration_minutes), 0) FROM services
+            WHERE id IN (" . rtrim(str_repeat('?,', count($service_ids)), ',') . ")
+        ");
+        $dur_stmt->execute($service_ids);
+        $duration = (int) $dur_stmt->fetchColumn();
+        if ($duration <= 0) $duration = 30;
+        $end_time = date('H:i', strtotime($start_time) + $duration * 60);
+
+        $within = $pdo->prepare("
+            SELECT COUNT(*) FROM availability
+            WHERE date = ? AND status = 'available' AND start_time <= ? AND end_time >= ?
+        ");
+        $within->execute([$schedule_date, $start_time, $end_time]);
+
+        $conflict = $pdo->prepare("
+            SELECT COUNT(*) FROM bookings
+            WHERE schedule_date = ?
+              AND status IN ('pending', 'assigned', 'accepted', 'deposit_submitted')
+              AND schedule_start_time < ? AND schedule_end_time > ?
+        ");
+        $conflict->execute([$schedule_date, $end_time, $start_time]);
+
+        if (!$within->fetchColumn()) {
+            $msg = '❌ Selected date/time is outside shop availability.';
+            $msg_type = 'danger';
+        } elseif ($conflict->fetchColumn()) {
+            $msg = '❌ Selected time overlaps an existing booking.';
+            $msg_type = 'danger';
+        } else {
+            try {
+                $stmt = $pdo->prepare("
+                    INSERT INTO bookings
+                    (user_id, service_ids, package_ids, vehicle_id, schedule_date, schedule_start_time, schedule_end_time, total_price, status, mechanic_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)
+                ");
+                $stmt->execute([
+                    $customer_id,
+                    json_encode($service_ids),
+                    json_encode([]),
+                    $motorcycle_id,
+                    $schedule_date,
+                    $start_time,
+                    $end_time,
+                    $total_price,
+                    $mechanic_id ?: null
+                ]);
+
+                if ($mechanic_id) {
+                    $pdo->prepare("INSERT INTO booking_mechanics (booking_id, mechanic_id) VALUES (?, ?)")
+                        ->execute([$pdo->lastInsertId(), $mechanic_id]);
+                }
+
+                header('Location: maintenance_management.php?customer_id=' . $customer_id . '&scheduled=1');
+                exit;
+            } catch (PDOException $e) {
+                $msg = '❌ Error scheduling maintenance: ' . $e->getMessage();
+                $msg_type = 'danger';
+                error_log('Schedule maintenance error: ' . $e->getMessage());
+            }
+        }
+    }
+}
+
+if (isset($_GET['scheduled'])) {
+    $msg = '✅ Maintenance scheduled successfully!';
+    $msg_type = 'success';
+}
+
 $maintenance_timeline = [];
 $upcoming_maintenance = [];
 $overdue_maintenance = [];
 $recent_records = [];
+$mechanics = [];
+$services = [];
+$avail_map = [];
+$booked_map = [];
 
 try {
     $stmt = $pdo->query("
@@ -95,6 +184,40 @@ try {
     ";
     $stmt = $pdo->query($recent_sql);
     $recent_records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmt = $pdo->query("SELECT id, name FROM mechanics ORDER BY name ASC");
+    $mechanics = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $stmt = $pdo->query("SELECT id, service_name, price, duration_minutes FROM services ORDER BY service_name ASC");
+    $services = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Shop availability windows (date -> time segments)
+    $availability_rows = $pdo->query("
+        SELECT date, start_time, end_time
+        FROM availability
+        WHERE status = 'available' AND date >= CURDATE()
+        ORDER BY date, start_time
+    ")->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($availability_rows as $a) {
+        $avail_map[$a['date']][] = [
+            'start' => substr($a['start_time'], 0, 5),
+            'end' => substr($a['end_time'], 0, 5),
+        ];
+    }
+
+    // Occupied booking times to subtract from availability
+    $booked_rows = $pdo->query("
+        SELECT schedule_date, schedule_start_time, schedule_end_time
+        FROM bookings
+        WHERE status IN ('pending', 'assigned', 'accepted', 'deposit_submitted')
+          AND schedule_date >= CURDATE()
+    ")->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($booked_rows as $b) {
+        $booked_map[$b['schedule_date']][] = [
+            'start' => substr($b['schedule_start_time'], 0, 5),
+            'end' => substr($b['schedule_end_time'], 0, 5),
+        ];
+    }
 } catch (PDOException $e) {
     $msg = '❌ Error loading maintenance data: ' . $e->getMessage();
     $msg_type = 'danger';
@@ -997,7 +1120,13 @@ $pageTitle = 'Maintenance Management';
                                                         <span class="timeline-title"><?= $item['label'] ?></span>
                                                         <?php if ($status_class === 'scheduled'): ?>
                                                             <?php if ($isNextScheduled): ?>
-                                                                <button type="button" class="timeline-badge <?= $status_class ?>" onclick="window.location.href='admin_maintenance_history.php?customer_id=<?= (int) $selected_customer_id ?>&motorcycle_id=<?= (int) $m['motorcycle_id'] ?>&mileage=<?= (int) $item['mileage'] ?>&open_add=1'">
+                                                                <button type="button" class="timeline-badge <?= $status_class ?>"
+                                                                        data-customer="<?= (int) $selected_customer_id ?>"
+                                                                        data-moto="<?= (int) $m['motorcycle_id'] ?>"
+                                                                        data-mileage="<?= (int) $item['mileage'] ?>"
+                                                                        data-moto-label="<?= htmlspecialchars($m['brand'] . ' ' . $m['model'] . ' (' . $m['plate_number'] . ')') ?>"
+                                                                        data-service-label="<?= htmlspecialchars($item['label']) ?>"
+                                                                        onclick="openScheduleModal(this)">
                                                                     <?= $status_label ?>
                                                                 </button>
                                                             <?php else: ?>
@@ -1071,7 +1200,204 @@ $pageTitle = 'Maintenance Management';
     </div>
 </div>
 
+<!-- Schedule Maintenance Modal -->
+<div class="modal fade" id="scheduleMaintenanceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-calendar-plus me-2"></i>Schedule Maintenance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" class="mm-text">
+                <div class="modal-body">
+                    <input type="hidden" name="schedule_maintenance" value="1">
+                    <input type="hidden" name="customer_id" id="schedCustomerId">
+                    <input type="hidden" name="motorcycle_id" id="schedMotorcycleId">
+
+                    <div class="mb-3">
+                        <label class="form-label">Motorcycle</label>
+                        <div class="fw-bold" id="schedMotoInfo"></div>
+                        <div class="text-muted" id="schedItemInfo" style="font-size: 0.75rem;"></div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-4 mb-1">
+                            <label class="form-label">Schedule Date *</label>
+                            <select class="form-select" name="schedule_date" id="schedDate" required onchange="populateSchedTimes()">
+                                <option value="">Select Date</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-1">
+                            <label class="form-label">Start Time *</label>
+                            <select class="form-select" name="schedule_start_time" id="schedStart" required onchange="updateSchedEnd()">
+                                <option value="">Select Date First</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-1">
+                            <label class="form-label">End Time (auto)</label>
+                            <input type="text" class="form-control" id="schedEndDisplay" readonly placeholder="Based on service duration">
+                            <input type="hidden" name="schedule_end_time" id="schedEnd">
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6 mb-1">
+                            <label class="form-label">Service(s) *</label>
+                            <select class="form-select" name="service_ids[]" id="schedServiceIds" required multiple size="6" onchange="onSchedServicesChange()">
+                                <?php foreach ($services as $svc): ?>
+                                    <option value="<?= (int) $svc['id'] ?>" data-price="<?= htmlspecialchars($svc['price']) ?>" data-duration="<?= (int) $svc['duration_minutes'] ?>"><?= htmlspecialchars($svc['service_name']) ?> (₱<?= number_format($svc['price'], 2) ?>)</option>
+                                <?php endforeach; ?>
+                            </select>
+                            <div class="form-text" style="font-size: 0.65rem;">Hold Ctrl (Cmd on Mac) to select multiple services. End time is auto-computed from total service duration (<span id="schedDuration">0</span> min).</div>
+                        </div>
+                        <div class="col-md-6 mb-1">
+                            <label class="form-label">Total Price (₱)</label>
+                            <input type="number" step="0.01" class="form-control" name="total_price" id="schedTotalPrice" value="0.00">
+                        </div>
+                    </div>
+
+                    <div class="mb-1">
+                        <label class="form-label">Assign Mechanic (optional)</label>
+                        <select class="form-select" name="mechanic_id">
+                            <option value="">Unassigned</option>
+                            <?php foreach ($mechanics as $mech): ?>
+                                <option value="<?= (int) $mech['id'] ?>"><?= htmlspecialchars($mech['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
+const AVAIL_MAP = <?= json_encode($avail_map) ?>;
+const BOOKED_MAP = <?= json_encode($booked_map) ?>;
+const SLOT_STEP = 30;
+
+function toMin(t) { const [h, m] = t.split(':'); return (+h) * 60 + (+m); }
+function toTime(min) { return String(Math.floor(min / 60)).padStart(2, '0') + ':' + String(min % 60).padStart(2, '0'); }
+function fmtTime(t) { let [h, m] = t.split(':'); h = +h; const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return h + ':' + m + ' ' + ap; }
+function fmtDate(d) { return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+
+// Subtract existing bookings from shop availability segments
+function freeWindows(date) {
+    let windows = (AVAIL_MAP[date] || []).map(s => ({ start: s.start, end: s.end }));
+    const books = (BOOKED_MAP[date] || []).slice().sort((a, b) => a.start.localeCompare(b.start));
+    for (const b of books) {
+        const next = [];
+        for (const w of windows) {
+            if (b.start >= w.end || b.end <= w.start) { next.push(w); continue; }
+            if (w.start < b.start) next.push({ start: w.start, end: b.start });
+            if (w.end > b.end) next.push({ start: b.end, end: w.end });
+        }
+        windows = next;
+    }
+    return windows
+        .filter(w => toMin(w.end) - toMin(w.start) >= SLOT_STEP)
+        .sort((a, b) => a.start.localeCompare(b.start));
+}
+
+function getSchedDuration() {
+    const sel = document.getElementById('schedServiceIds');
+    let total = 0;
+    for (const o of sel.selectedOptions) total += parseInt(o.dataset.duration || 0, 10);
+    return total > 0 ? total : SLOT_STEP;
+}
+
+function resetSchedTimes() {
+    document.getElementById('schedStart').innerHTML = '<option value="">Select Date First</option>';
+    document.getElementById('schedEnd').value = '';
+    document.getElementById('schedEndDisplay').value = '';
+}
+
+function populateSchedDates() {
+    const dateSel = document.getElementById('schedDate');
+    const duration = getSchedDuration();
+    dateSel.innerHTML = '<option value="">Select Date</option>';
+    Object.keys(AVAIL_MAP).sort().forEach(d => {
+        if (!freeWindows(d).some(w => toMin(w.end) - toMin(w.start) >= duration)) return;
+        const o = document.createElement('option');
+        o.value = d;
+        o.textContent = fmtDate(d);
+        dateSel.appendChild(o);
+    });
+    resetSchedTimes();
+}
+
+function populateSchedTimes() {
+    const date = document.getElementById('schedDate').value;
+    const duration = getSchedDuration();
+    const startSel = document.getElementById('schedStart');
+    startSel.innerHTML = '<option value="">Select Time</option>';
+    document.getElementById('schedEnd').value = '';
+    document.getElementById('schedEndDisplay').value = '';
+    if (!date) return;
+    for (const w of freeWindows(date)) {
+        for (let t = toMin(w.start); t <= toMin(w.end) - duration; t += SLOT_STEP) {
+            const v = toTime(t);
+            const o = document.createElement('option');
+            o.value = v;
+            o.textContent = fmtTime(v);
+            startSel.appendChild(o);
+        }
+    }
+}
+
+function updateSchedEnd() {
+    const start = document.getElementById('schedStart').value;
+    const endInput = document.getElementById('schedEnd');
+    const endDisplay = document.getElementById('schedEndDisplay');
+    if (!start) {
+        endInput.value = '';
+        endDisplay.value = '';
+        return;
+    }
+    const end = toTime(toMin(start) + getSchedDuration());
+    endInput.value = end;
+    endDisplay.value = fmtTime(end);
+}
+
+function onSchedServicesChange() {
+    updateSchedPrice();
+    document.getElementById('schedDate').value = '';
+    populateSchedDates();
+}
+
+function updateSchedPrice() {
+    const sel = document.getElementById('schedServiceIds');
+    let total = 0;
+    for (const o of sel.selectedOptions) total += parseFloat(o.dataset.price || 0);
+    document.getElementById('schedTotalPrice').value = total.toFixed(2);
+    document.getElementById('schedDuration').textContent = sel.selectedOptions.length ? getSchedDuration() : 0;
+}
+
+function openScheduleModal(btn) {
+    document.getElementById('schedCustomerId').value = btn.dataset.customer;
+    document.getElementById('schedMotorcycleId').value = btn.dataset.moto;
+    document.getElementById('schedMotoInfo').textContent = btn.dataset.motoLabel;
+    document.getElementById('schedItemInfo').textContent = btn.dataset.serviceLabel + ' @ ' + Number(btn.dataset.mileage).toLocaleString() + ' km';
+
+    const sel = document.getElementById('schedServiceIds');
+    for (const o of sel.options) o.selected = false;
+    const label = (btn.dataset.serviceLabel || '').toLowerCase();
+    for (const opt of sel.options) {
+        const text = opt.textContent.toLowerCase();
+        if (label.includes('preventive') && text.includes('preventive')) { opt.selected = true; break; }
+        if (label.includes('major') && text.includes('complete')) { opt.selected = true; break; }
+        if (label.includes('first') && text.includes('safety inspection')) { opt.selected = true; break; }
+    }
+    updateSchedPrice();
+    populateSchedDates();
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('scheduleMaintenanceModal')).show();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.maintenance-timeline .timeline-dot').forEach(dot => {
         dot.addEventListener('click', function(e) {
