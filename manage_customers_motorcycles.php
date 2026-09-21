@@ -820,12 +820,6 @@ require 'admin_sidebar_template.php';
     }
 
     /* View Customer Dialog */
-    .vc-view-grid { display: flex; flex-direction: column; gap: 0.75rem; }
-    @media (min-width: 768px) {
-        .vc-view-grid { flex-direction: row; }
-        .vc-view-grid > .vc-view-col { flex: 1; min-width: 0; }
-    }
-    .vc-view-col { display: flex; flex-direction: column; gap: 0.75rem; }
     .vc-card {
         background: #ffffff;
         border: 1px solid var(--card-border);
@@ -844,75 +838,6 @@ require 'admin_sidebar_template.php';
         margin-bottom: 0.75rem;
     }
     .vc-section-title i { width: 16px; height: 16px; color: var(--accent-color); }
-    .vc-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 0.5rem;
-        padding: 0.35rem 0;
-        border-bottom: 1px solid var(--card-border);
-    }
-    .vc-row:last-child { border-bottom: none; }
-    .vc-row.align-top { align-items: flex-start; }
-    .vc-label {
-        font-size: 0.65rem;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        white-space: nowrap;
-    }
-    .vc-value {
-        font-size: 0.82rem;
-        font-weight: 700;
-        color: var(--text-dark);
-        text-align: right;
-        max-width: 65%;
-        word-break: break-word;
-    }
-    .vc-value.wrap { text-align: left; max-width: 100%; width: 100%; margin-top: 0.15rem; line-height: 1.4; }
-    .vc-value.badge-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-        padding: 0.15rem 0.5rem;
-        border-radius: 99px;
-        font-size: 0.65rem;
-        font-weight: 800;
-        text-transform: uppercase;
-    }
-    .vc-moto-card {
-        background: #ffffff;
-        border: 1px solid var(--card-border);
-        border-radius: 12px;
-        padding: 0.75rem;
-        margin-bottom: 0.75rem;
-    }
-    .vc-moto-title {
-        font-size: 0.9rem;
-        font-weight: 800;
-        color: var(--text-dark);
-        margin-bottom: 0.75rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid var(--card-border);
-    }
-    .vc-moto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem 0.75rem; }
-    .vc-moto-pair { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.25rem 0; }
-    .vc-moto-pair .vc-label { font-size: 0.6rem; }
-    .vc-moto-pair .vc-value { font-size: 0.78rem; text-align: left; max-width: 100%; }
-    .vc-empty { color: var(--text-muted); text-align: center; padding: 1rem; }
-
-    /* Motorcycle photos */
-    .vc-moto-image {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 0.75rem;
-    }
-    .vc-moto-image img {
-        max-width: 180px;
-        max-height: 110px;
-        object-fit: contain;
-        mix-blend-mode: multiply;
-    }
 
     /* Customer list view */
     .customer-list {
@@ -1026,20 +951,8 @@ require 'admin_sidebar_template.php';
     .vc-master-detail { display: flex; gap: 1.5rem; align-items: stretch; flex: 1; min-height: 0; }
     .vc-master-col { flex: 1 1 58%; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
     #customerListSection { flex: 1; display: flex; flex-direction: column; min-height: 0; }
-    .vc-detail-col { flex: 1 1 42%; min-width: 0; position: sticky; top: 96px; align-self: flex-start; }
-    .customer-detail {
-        background: #ffffff;
-        border: 1px solid var(--card-border);
-        border-radius: 16px;
-        padding: 1rem;
-        max-height: calc(100vh - 110px);
-        overflow-y: auto;
-    }
-    .vc-empty-state { text-align: center; color: var(--text-muted); padding: 2.5rem 1rem; }
-    .vc-empty-state i { opacity: .75; }
     @media (max-width: 991px) {
         .vc-master-detail { flex-direction: column; }
-        .vc-detail-col { position: static; width: 100%; }
     }
     #customerRows { display: contents; }
     .customer-list-section {
@@ -1048,6 +961,72 @@ require 'admin_sidebar_template.php';
     .customer-list-section.loading {
         opacity: 0.5 !important;
         pointer-events: none;
+    }
+
+    /* View dialog cards (same style as manage_motorcycles view modal) */
+    .view-card {
+        background: #ffffff;
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 1rem;
+        height: 100%;
+    }
+    .view-card .vc-section-title {
+        margin-bottom: 0.75rem;
+        color: #1e3a5f;
+    }
+    .view-card .view-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 0;
+        border-bottom: 1px solid var(--card-border);
+    }
+    .view-card .view-item:last-child {
+        border-bottom: none;
+    }
+    .view-card .view-label {
+        color: var(--text-muted);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+    .view-card .view-value {
+        font-weight: 600;
+        color: var(--text-dark);
+        text-align: right;
+        word-break: break-word;
+        max-width: 60%;
+    }
+    .view-card .badge {
+        color: #fff !important;
+    }
+    #viewCustomerModal .modal-body {
+        padding: 1rem;
+    }
+    #viewCustomerModal .modal-footer {
+        padding: 0.75rem 1rem;
+    }
+    #viewModalTitle {
+        font-weight: 700;
+    }
+    #viewModalSubtitle {
+        font-size: 0.85rem;
+    }
+    .view-moto-image {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    .view-moto-image img {
+        max-width: 240px;
+        max-height: 150px;
+        object-fit: contain;
+        border-radius: 12px;
+        mix-blend-mode: multiply;
     }
 </style>
 
@@ -1097,8 +1076,28 @@ require 'admin_sidebar_template.php';
 
 </div>
 </div>
+</div>
 
 
+
+<!-- View Customer Modal -->
+<div class="modal fade" id="viewCustomerModal" tabindex="-1" aria-labelledby="viewModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="viewModalTitle">Customer Profile</h5>
+                    <div class="text-muted" id="viewModalSubtitle">Select a customer to view details</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewCustomerBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Add Customer & Motorcycle Modal -->
 <div class="modal fade" id="addCustomerMotorcycleModal" tabindex="-1">
@@ -1536,65 +1535,105 @@ function deleteCustomer(customerId, customerName) {
     });
 }
 
+function viewEsc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+
+function viewDate(s) {
+    if (!s) return 'N/A';
+    const d = new Date(s);
+    return isNaN(d) ? viewEsc(s) : d.toLocaleDateString();
+}
+
 function showCustomerDetail(customerId) {
-    const pane = document.getElementById('customerDetailPane');
-    pane.innerHTML = `<div class='vc-empty-state'><div class='spinner-border text-primary' role='status'><span class='visually-hidden'>Loading...</span></div><p class='mt-2 text-muted'>Loading customer details...</p></div>`;
+    const modalEl = document.getElementById('viewCustomerModal');
+    const body = document.getElementById('viewCustomerBody');
+    document.getElementById('viewModalTitle').textContent = 'Customer Profile';
+    document.getElementById('viewModalSubtitle').textContent = 'Loading customer details...';
+    body.innerHTML = `<div class='text-center py-5'><div class='spinner-border text-primary' role='status'><span class='visually-hidden'>Loading...</span></div></div>`;
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
 
     fetch('get_customer_data.php?id=' + customerId + '&include_motorcycles=1')
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                const customer = data.customer;
-                const motorcycles = data.motorcycles || [];
-                
-                const motoList = motorcycles.map((moto, i) => {
-                    const imgSrc = motoImageFor(moto);
-                    return `
-                    <div class='vc-moto-card'>
-                        <div class='vc-moto-title'>#${i + 1}: ${moto.brand || ''} ${moto.model || ''}</div>
-                        ${imgSrc ? `<div class='vc-moto-image'><img src='${imgSrc}' alt=''></div>` : ''}
-                        <div class='vc-moto-grid'>
-                            <div class='vc-moto-pair'><span class='vc-label'>Brand</span><span class='vc-value'>${moto.brand || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Model</span><span class='vc-value'>${moto.model || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Color</span><span class='vc-value'>${moto.color || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Year Model</span><span class='vc-value'>${moto.year_model || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Plate Number</span><span class='vc-value'>${moto.plate_number || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Engine Number</span><span class='vc-value'>${moto.engine_number || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Chassis Number</span><span class='vc-value'>${moto.chassis_number || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Purchase Date</span><span class='vc-value'>${moto.purchase_date || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Current Mileage</span><span class='vc-value'>${moto.current_mileage || 0} km</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Status</span><span class='vc-value badge-pill' style='background:${(moto.status || '').toLowerCase() === 'active' ? '#10b981' : '#FACC15'};color:#ffffff;'>${moto.status || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Warranty Status</span><span class='vc-value'>${moto.warranty_status || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Warranty Expiry</span><span class='vc-value'>${moto.warranty_expiry_date || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Last Maintenance</span><span class='vc-value'>${moto.last_maintenance_date || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Next Maintenance</span><span class='vc-value'>${moto.next_maintenance_date || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Health Score</span><span class='vc-value'>${moto.health_score || 'N/A'}</span></div>
-                            <div class='vc-moto-pair'><span class='vc-label'>Registered</span><span class='vc-value'>${moto.created_at || 'N/A'}</span></div>
-                        </div>
-                    </div>
-                `;
-                }).join('');
-                
-                pane.innerHTML = `
-                    <div class='vc-card mb-3'>
-                        <div class='vc-section-title'>Customer Information</div>
-                        <div class='vc-row'><span class='vc-label'>Username</span><span class='vc-value'>${customer.username || 'N/A'}</span></div>
-                        <div class='vc-row'><span class='vc-label'>Email</span><span class='vc-value'>${customer.email || 'N/A'}</span></div>
-                        <div class='vc-row'><span class='vc-label'>Phone</span><span class='vc-value'>${customer.phone || 'N/A'}</span></div>
-                        <div class='vc-row align-top'><span class='vc-label'>Address</span><span class='vc-value wrap'>${customer.address || 'N/A'}</span></div>
-                        <div class='vc-row'><span class='vc-label'>Status</span><span class='vc-value badge-pill' style='background:${customer.status === 'Active' ? '#10b981' : '#FACC15'};color:#ffffff;'>${customer.status || 'N/A'}</span></div>
-                    </div>
-                    <div class='vc-section-title'>Motorcycles (${motorcycles.length})</div>
-                    ${motoList || `<div class='vc-empty-state'>No motorcycles registered for this customer.</div>`}
-                `;
-                pane.scrollTop = 0;
-            } else {
-                pane.innerHTML = `<div class='vc-empty-state text-danger'>${data.message || 'Unable to load customer details.'}</div>`;
+            if (!data.success) {
+                body.innerHTML = `<div class='text-danger text-center py-4'>${viewEsc(data.message || 'Unable to load customer details.')}</div>`;
+                return;
             }
+
+            const customer = data.customer;
+            const motorcycles = data.motorcycles || [];
+
+            document.getElementById('viewModalTitle').textContent = customer.username || 'Customer Profile';
+            document.getElementById('viewModalSubtitle').textContent = customer.email || '';
+
+            let html = `<div class='row g-2'>
+                <div class='col-12'>
+                    <div class='view-card'>
+                        <h6 class='vc-section-title'>Customer Information</h6>
+                        <div class='view-item'><span class='view-label'>Username</span><span class='view-value'>${viewEsc(customer.username) || 'N/A'}</span></div>
+                        <div class='view-item'><span class='view-label'>Email</span><span class='view-value'>${viewEsc(customer.email) || 'N/A'}</span></div>
+                        <div class='view-item'><span class='view-label'>Phone</span><span class='view-value'>${viewEsc(formatPhoneString(customer.phone)) || 'N/A'}</span></div>
+                        <div class='view-item'><span class='view-label'>Address</span><span class='view-value'>${viewEsc(customer.address) || 'N/A'}</span></div>
+                        <div class='view-item'><span class='view-label'>Status</span><span class='view-value'><span class='badge ${customer.status === 'Active' ? 'bg-success' : 'bg-secondary'}'>${viewEsc(customer.status) || 'N/A'}</span></span></div>
+                        <div class='view-item'><span class='view-label'>Total Bookings</span><span class='view-value'>${customer.total_bookings || 0}</span></div>
+                    </div>
+                </div>`;
+
+            if (!motorcycles.length) {
+                html += `<div class='col-12'><div class='view-card text-center text-muted'>No motorcycles registered for this customer.</div></div>`;
+            }
+
+            motorcycles.forEach(function(moto, i) {
+                const imgSrc = motoImageFor(moto);
+                const status = moto.status || '';
+                html += `
+                ${imgSrc ? `<div class='col-12'><div class='view-moto-image'><img src='${viewEsc(imgSrc)}' alt='${viewEsc(moto.model || 'Motorcycle')}'></div></div>` : ''}
+                <div class='col-md-6'>
+                    <div class='view-card'>
+                        <h6 class='vc-section-title'>Motorcycle ${motorcycles.length > 1 ? '#' + (i + 1) + ' ' : ''}Details</h6>
+                        <div class='view-item'><span class='view-label'>Brand</span><span class='view-value'>${viewEsc(moto.brand) || 'N/A'}</span></div>
+                        <div class='view-item'><span class='view-label'>Model</span><span class='view-value'>${viewEsc(moto.model) || 'N/A'}</span></div>
+                        <div class='view-item'><span class='view-label'>Color</span><span class='view-value'>${viewEsc(moto.color) || 'N/A'}</span></div>
+                        <div class='view-item'><span class='view-label'>Year Model</span><span class='view-value'>${viewEsc(moto.year_model) || 'N/A'}</span></div>
+                    </div>
+                </div>
+                <div class='col-md-6'>
+                    <div class='view-card'>
+                        <h6 class='vc-section-title'>Identification</h6>
+                        <div class='view-item'><span class='view-label'>Plate Number</span><span class='view-value'><span class='badge bg-info'>${viewEsc(moto.plate_number) || 'N/A'}</span></span></div>
+                        <div class='view-item'><span class='view-label'>Engine Number</span><span class='view-value'>${viewEsc(moto.engine_number) || 'N/A'}</span></div>
+                        <div class='view-item'><span class='view-label'>Chassis Number</span><span class='view-value'>${viewEsc(moto.chassis_number) || 'N/A'}</span></div>
+                    </div>
+                </div>
+                <div class='col-md-6'>
+                    <div class='view-card'>
+                        <h6 class='vc-section-title'>Additional Information</h6>
+                        <div class='view-item'><span class='view-label'>Purchase Date</span><span class='view-value'>${viewDate(moto.purchase_date)}</span></div>
+                        <div class='view-item'><span class='view-label'>Current Mileage</span><span class='view-value'><span class='badge bg-success'>${parseFloat(moto.current_mileage || 0).toFixed(2)} km</span></span></div>
+                        <div class='view-item'><span class='view-label'>Status</span><span class='view-value'>${status ? status.charAt(0).toUpperCase() + status.slice(1) : 'N/A'}</span></div>
+                        <div class='view-item'><span class='view-label'>Registered</span><span class='view-value'>${viewDate(moto.created_at)}</span></div>
+                    </div>
+                </div>
+                <div class='col-md-6'>
+                    <div class='view-card'>
+                        <h6 class='vc-section-title'>Maintenance &amp; Warranty</h6>
+                        <div class='view-item'><span class='view-label'>Warranty Status</span><span class='view-value'>${viewEsc(moto.warranty_status) || 'N/A'}</span></div>
+                        <div class='view-item'><span class='view-label'>Warranty Expiry</span><span class='view-value'>${viewDate(moto.warranty_expiry_date)}</span></div>
+                        <div class='view-item'><span class='view-label'>Last Maintenance</span><span class='view-value'>${viewDate(moto.last_maintenance_date)}</span></div>
+                        <div class='view-item'><span class='view-label'>Next Maintenance</span><span class='view-value'>${viewDate(moto.next_maintenance_date)}</span></div>
+                        <div class='view-item'><span class='view-label'>Health Score</span><span class='view-value'>${moto.health_score != null ? viewEsc(moto.health_score) : 'N/A'}</span></div>
+                    </div>
+                </div>`;
+            });
+            html += `</div>`;
+            body.innerHTML = html;
         })
         .catch(error => {
             console.error('Error:', error);
-            pane.innerHTML = `<div class='vc-empty-state text-danger'>Failed to fetch customer data. Please try again.</div>`;
+            body.innerHTML = `<div class='text-danger text-center py-4'>Failed to fetch customer data. Please try again.</div>`;
         });
 }
 
