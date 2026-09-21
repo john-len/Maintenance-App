@@ -218,7 +218,7 @@ $login_button_text = 'Login';
             line-height: 1.6;
         }
 
-        html { scroll-behavior: smooth; }
+        html { scroll-behavior: smooth; overflow-x: hidden; }
         section[id], footer[id] { scroll-margin-top: 84px; }
         img { max-width: 100%; height: auto; }
 

@@ -500,6 +500,10 @@ $pageTitle = 'Maintenance History';
             box-sizing: border-box;
         }
 
+        html {
+            overflow-x: hidden;
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--bg-light);
@@ -567,11 +571,13 @@ $pageTitle = 'Maintenance History';
             transition: all 0.3s ease;
         }
 
-        .btn-logout:hover {
-            background: #dc3545;
-            border-color: #dc3545;
-            color: white;
-            transform: translateY(-2px);
+        @media (hover: hover) and (pointer: fine) {
+            .btn-logout:hover {
+                background: #dc3545;
+                border-color: #dc3545;
+                color: white;
+                transform: translateY(-2px);
+            }
         }
 
         /* ============================================
@@ -663,9 +669,11 @@ $pageTitle = 'Maintenance History';
             transition: all 0.2s ease;
         }
 
-        .stat-card:hover {
-            border-color: rgba(0, 0, 0, 0.12);
-            transform: translateY(-2px);
+        @media (hover: hover) and (pointer: fine) {
+            .stat-card:hover {
+                border-color: rgba(0, 0, 0, 0.12);
+                transform: translateY(-2px);
+            }
         }
 
         .stat-icon {
@@ -704,10 +712,12 @@ $pageTitle = 'Maintenance History';
             overflow: hidden;
         }
 
-        .emergency-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
-            border-color: var(--accent-color);
+        @media (hover: hover) and (pointer: fine) {
+            .emergency-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+                border-color: var(--accent-color);
+            }
         }
 
         .emergency-header {
@@ -745,11 +755,13 @@ $pageTitle = 'Maintenance History';
             transition: all 0.2s ease;
         }
 
-        .emergency-card .card-body > .row:first-of-type .col-6:hover > div,
-        .emergency-card .card-body > .row:first-of-type .col-md-3:hover > div {
-            border-color: var(--accent-color);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+        @media (hover: hover) and (pointer: fine) {
+            .emergency-card .card-body > .row:first-of-type .col-6:hover > div,
+            .emergency-card .card-body > .row:first-of-type .col-md-3:hover > div {
+                border-color: var(--accent-color);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            }
         }
 
         .emergency-card .contact-info {
@@ -1062,9 +1074,11 @@ $pageTitle = 'Maintenance History';
             height: 100%;
         }
 
-        .service-record-card:hover {
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            transform: translateY(-2px);
+        @media (hover: hover) and (pointer: fine) {
+            .service-record-card:hover {
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+                transform: translateY(-2px);
+            }
         }
 
         .service-record-number {
