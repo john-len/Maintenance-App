@@ -51,6 +51,73 @@ $modelImages = [
     'Bajaj'      => 'bad.png',
 ];
 
+// Formats a stored phone number as 09** *** **** for display
+function formatPhoneDisplay($phone) {
+    $d = preg_replace('/\D/', '', (string)$phone);
+    return strlen($d) === 11 ? substr($d, 0, 4) . ' ' . substr($d, 4, 3) . ' ' . substr($d, 7, 4) : (string)$phone;
+}
+
+// Renders the customer list (empty state or rows). Also used by the AJAX live-refresh endpoint.
+function renderCustomerList(array $customers) {
+    ?>
+    <?php if (empty($customers)): ?>
+    <div class="text-center py-5">
+        <i class="bi bi-people display-1 text-muted"></i>
+        <h4 class="mt-3 text-muted">No customers found</h4>
+        <p class="text-muted">Start by adding a new customer</p>
+    </div>
+    <?php else: ?>
+    <div class="customer-list" id="customersTable">
+        <div class="customer-list-header">
+            <span class="customer-col-name">Customer</span>
+            <span class="customer-col-email">Email</span>
+            <span class="customer-col-phone">Phone</span>
+            <span class="customer-col-address">Address</span>
+            <span class="customer-col-motorcycles">Motorcycles</span>
+            <span class="customer-col-status">Status</span>
+            <span class="customer-col-actions">Actions</span>
+        </div>
+        <?php foreach ($customers as $customer): ?>
+        <div class="customer-row" data-username="<?= strtolower(htmlspecialchars($customer['username'])) ?>" data-email="<?= strtolower(htmlspecialchars($customer['email'])) ?>" data-phone="<?= strtolower(htmlspecialchars($customer['phone'] ?? '')) ?>" data-motorcycles="<?= strtolower(htmlspecialchars($customer['motorcycle_details'] ?? '')) ?>">
+            <div class="customer-cell customer-col-name">
+                <div class="customer-name"><?= htmlspecialchars($customer['username']) ?></div>
+                <?php if ($customer['archived']): ?>
+                    <div class="customer-meta"><span class="customer-status Archived">Archived</span></div>
+                <?php endif; ?>
+            </div>
+            <div class="customer-cell customer-col-email"><?= htmlspecialchars($customer['email']) ?></div>
+            <div class="customer-cell customer-col-phone"><?= htmlspecialchars(formatPhoneDisplay($customer['phone'])) ?></div>
+            <div class="customer-cell customer-col-address" title="<?= htmlspecialchars($customer['address']) ?>"><?= htmlspecialchars($customer['address']) ?></div>
+            <div class="customer-cell customer-col-motorcycles">
+                <?php if ($customer['motorcycle_details']): ?>
+                    <div class="customer-meta"><?= htmlspecialchars($customer['motorcycle_details']) ?></div>
+                <?php else: ?>
+                    <div class="customer-meta">No motorcycles</div>
+                <?php endif; ?>
+            </div>
+            <div class="customer-cell customer-col-status">
+                <span class="customer-status <?= htmlspecialchars($customer['status']) ?>"><?= $customer['status'] ?></span>
+            </div>
+            <div class="customer-cell customer-col-actions">
+                <div class="action-group">
+                    <button type="button" class="action-btn view" onclick="showCustomerDetail(<?= $customer['id'] ?>)" title="View Details">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button type="button" class="action-btn edit" onclick="editCustomer(<?= $customer['id'] ?>)" title="Edit Customer">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button type="button" class="action-btn delete" onclick="deleteCustomer(<?= $customer['id'] ?>, '<?= htmlspecialchars($customer['username']) ?>')" title="Delete Customer">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+    <?php
+}
+
 // --- Status List for Buttons and Filtering ---
 $status_list = [
     'All' => 'All Customers',
@@ -67,7 +134,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_customer_motor
     $username = trim($_POST['username'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
-    $phone = trim($_POST['phone'] ?? '');
+    $phone = preg_replace('/\D/', '', $_POST['phone'] ?? '');
     $address = trim($_POST['address'] ?? '');
     $birthdate = $_POST['birthdate'] ?? null;
     $gender = $_POST['gender'] ?? null;
@@ -86,6 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_customer_motor
 
     if (empty($username) || empty($email) || empty($password) || empty($phone) || empty($address)) {
         $msg = "❌ Please fill in all required customer fields.";
+        $msg_type = "error";
+    } elseif (!preg_match('/^09\d{9}$/', $phone)) {
+        $msg = "❌ Please enter a valid 11-digit mobile number starting with 09 (e.g., 0917 123 4567).";
         $msg_type = "error";
     } elseif (empty($brand) || empty($model) || empty($color) || empty($year_model) || empty($plate_number) || empty($engine_number) || empty($chassis_number) || empty($purchase_date)) {
         $msg = "❌ Please fill in all required motorcycle fields.";
@@ -147,7 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_customer'])) {
     $customer_id = $_POST['customer_id'] ?? 0;
     $username = trim($_POST['username'] ?? '');
     $email = trim($_POST['email'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
+    $phone = preg_replace('/\D/', '', $_POST['phone'] ?? '');
     $address = trim($_POST['address'] ?? '');
     $birthdate = $_POST['birthdate'] ?? null;
     $gender = $_POST['gender'] ?? null;
@@ -155,6 +225,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_customer'])) {
 
     if (empty($username) || empty($email) || empty($phone) || empty($address)) {
         $msg = "❌ Please fill in all required fields.";
+        $msg_type = "error";
+    } elseif (!preg_match('/^09\d{9}$/', $phone)) {
+        $msg = "❌ Please enter a valid 11-digit mobile number starting with 09 (e.g., 0917 123 4567).";
         $msg_type = "error";
     } else {
         try {
@@ -524,6 +597,12 @@ try {
 } catch (PDOException $e) {
     error_log("Error fetching customers: " . $e->getMessage());
     $customers = [];
+}
+
+// --- AJAX endpoint: return only the customer list markup for live auto-refresh ---
+if (isset($_GET['ajax_list'])) {
+    renderCustomerList($customers);
+    exit;
 }
 
 // --- Fetch Customers for Dropdown (for adding motorcycle to existing customer) ---
@@ -962,6 +1041,7 @@ require 'admin_sidebar_template.php';
         .vc-master-detail { flex-direction: column; }
         .vc-detail-col { position: static; width: 100%; }
     }
+    #customerRows { display: contents; }
     .customer-list-section {
         transition: opacity 0.2s ease;
     }
@@ -1010,62 +1090,10 @@ require 'admin_sidebar_template.php';
     </div>
 </form>
 
-<!-- Customers Table -->
-<?php if (empty($customers)): ?>
-    <div class="text-center py-5">
-        <i class="bi bi-people display-1 text-muted"></i>
-        <h4 class="mt-3 text-muted">No customers found</h4>
-        <p class="text-muted">Start by adding a new customer</p>
-    </div>
-<?php else: ?>
-    <div class="customer-list" id="customersTable">
-        <div class="customer-list-header">
-            <span class="customer-col-name">Customer</span>
-            <span class="customer-col-email">Email</span>
-            <span class="customer-col-phone">Phone</span>
-            <span class="customer-col-address">Address</span>
-            <span class="customer-col-motorcycles">Motorcycles</span>
-            <span class="customer-col-status">Status</span>
-            <span class="customer-col-actions">Actions</span>
-        </div>
-        <?php foreach ($customers as $customer): ?>
-        <div class="customer-row" data-username="<?= strtolower(htmlspecialchars($customer['username'])) ?>" data-email="<?= strtolower(htmlspecialchars($customer['email'])) ?>" data-phone="<?= strtolower(htmlspecialchars($customer['phone'] ?? '')) ?>" data-motorcycles="<?= strtolower(htmlspecialchars($customer['motorcycle_details'] ?? '')) ?>">
-            <div class="customer-cell customer-col-name">
-                <div class="customer-name"><?= htmlspecialchars($customer['username']) ?></div>
-                <?php if ($customer['archived']): ?>
-                    <div class="customer-meta"><span class="customer-status Archived">Archived</span></div>
-                <?php endif; ?>
-            </div>
-            <div class="customer-cell customer-col-email"><?= htmlspecialchars($customer['email']) ?></div>
-            <div class="customer-cell customer-col-phone"><?= htmlspecialchars($customer['phone']) ?></div>
-            <div class="customer-cell customer-col-address" title="<?= htmlspecialchars($customer['address']) ?>"><?= htmlspecialchars($customer['address']) ?></div>
-            <div class="customer-cell customer-col-motorcycles">
-                <?php if ($customer['motorcycle_details']): ?>
-                    <div class="customer-meta"><?= htmlspecialchars($customer['motorcycle_details']) ?></div>
-                <?php else: ?>
-                    <div class="customer-meta">No motorcycles</div>
-                <?php endif; ?>
-            </div>
-            <div class="customer-cell customer-col-status">
-                <span class="customer-status <?= htmlspecialchars($customer['status']) ?>"><?= $customer['status'] ?></span>
-            </div>
-            <div class="customer-cell customer-col-actions">
-                <div class="action-group">
-                    <button type="button" class="action-btn view" onclick="showCustomerDetail(<?= $customer['id'] ?>)" title="View Details">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                    <button type="button" class="action-btn edit" onclick="editCustomer(<?= $customer['id'] ?>)" title="Edit Customer">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <button type="button" class="action-btn delete" onclick="deleteCustomer(<?= $customer['id'] ?>, '<?= htmlspecialchars($customer['username']) ?>')" title="Delete Customer">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <?php endforeach; ?>
-    </div>
-<?php endif; ?>
+<!-- Customers Table (auto-refreshes via AJAX polling) -->
+<div id="customerRows">
+    <?php renderCustomerList($customers); ?>
+</div>
 
 </div>
 </div>
@@ -1098,7 +1126,7 @@ require 'admin_sidebar_template.php';
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Phone</label>
-                            <input type="text" name="phone" class="form-control" required>
+                            <input type="text" name="phone" class="form-control" required inputmode="numeric" maxlength="13" pattern="09[0-9]{2} [0-9]{3} [0-9]{4}" placeholder="09** *** ****" title="11-digit mobile number starting with 09 (e.g., 0917 123 4567)" oninput="formatPhoneNumber(this)">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Address</label>
@@ -1207,7 +1235,7 @@ require 'admin_sidebar_template.php';
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Phone *</label>
-                                <input type="text" name="phone" id="edit_phone" class="form-control" required>
+                                <input type="text" name="phone" id="edit_phone" class="form-control" required inputmode="numeric" maxlength="13" pattern="09[0-9]{2} [0-9]{3} [0-9]{4}" placeholder="09** *** ****" title="11-digit mobile number starting with 09 (e.g., 0917 123 4567)" oninput="formatPhoneNumber(this)">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Address *</label>
@@ -1352,6 +1380,19 @@ require 'admin_sidebar_template.php';
 
 
 <script>
+// Formats a phone value as 09** *** **** (11 digits, digits only)
+function formatPhoneString(value) {
+    var digits = (value || '').replace(/\D/g, '').slice(0, 11);
+    var parts = [];
+    if (digits.length > 0) parts.push(digits.slice(0, 4));
+    if (digits.length > 4) parts.push(digits.slice(4, 7));
+    if (digits.length > 7) parts.push(digits.slice(7, 11));
+    return parts.join(' ');
+}
+function formatPhoneNumber(input) {
+    input.value = formatPhoneString(input.value);
+}
+
 function formatPlateNumber(input) {
     let val = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
     let result = '';
@@ -1420,7 +1461,7 @@ function editCustomer(customerId) {
                 document.getElementById('edit_customer_id').value = data.customer.id;
                 document.getElementById('edit_username').value = data.customer.username;
                 document.getElementById('edit_email').value = data.customer.email;
-                document.getElementById('edit_phone').value = data.customer.phone;
+                document.getElementById('edit_phone').value = formatPhoneString(data.customer.phone);
                 document.getElementById('edit_address').value = data.customer.address;
                 document.getElementById('edit_birthdate').value = data.customer.birthdate || '';
                 document.getElementById('edit_gender').value = data.customer.gender || '';
@@ -1599,6 +1640,41 @@ document.addEventListener('click', function(e) {
             isLoadingCustomerList = false;
         });
 });
+
+// --- Live auto-refresh: poll for customer list changes so new registrations appear without reload ---
+(function () {
+    var POLL_MS = 5000;
+    var lastListHtml = null;
+
+    function refreshCustomerList() {
+        if (document.hidden) return;
+        var region = document.getElementById('customerRows');
+        if (!region) return;
+
+        var url = new URL(window.location.href);
+        url.searchParams.set('ajax_list', '1');
+        url.searchParams.set('_', Date.now());
+
+        fetch(url.toString())
+            .then(function (res) { return res.text(); })
+            .then(function (html) {
+                var region = document.getElementById('customerRows');
+                if (!region) return;
+                var trimmed = html.trim();
+                if (lastListHtml !== null && trimmed === lastListHtml) return;
+                lastListHtml = trimmed;
+                region.innerHTML = trimmed;
+                var searchInput = document.querySelector('#customerListSection input[name="search"]');
+                liveSearchCustomers(searchInput ? searchInput.value : '');
+            })
+            .catch(function () { /* ignore and retry on next poll */ });
+    }
+
+    setInterval(refreshCustomerList, POLL_MS);
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) refreshCustomerList();
+    });
+})();
 </script>
 
 <?php require 'admin_sidebar_footer.php'; ?>

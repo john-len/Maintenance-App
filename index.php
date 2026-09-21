@@ -143,9 +143,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_submit'])) {
         $email    = $_POST['reg_email'];
         // Use secure password hashing (bcrypt)
         $password = password_hash($_POST['reg_password'], PASSWORD_BCRYPT);
-        $phone    = sanitize_input($_POST['reg_phone']);
+        $phone    = preg_replace('/\D/', '', $_POST['reg_phone']); // digits only
         $address  = sanitize_input($_POST['reg_address']);
 
+        if (!preg_match('/^09\d{9}$/', $phone)) {
+            $msg = "❌ Please enter a valid 11-digit mobile number starting with 09 (e.g., 0917 123 4567).";
+        } else {
         try {
             $check = $pdo->prepare("SELECT id FROM users WHERE email=?");
             $check->execute([$email]);
@@ -164,6 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register_submit'])) {
             }
         } catch (PDOException $e) {
             $msg = "A database error occurred during registration. Please try again.";
+        }
         }
     }
 }
@@ -2785,7 +2789,7 @@ if ($delay_info['delay'] > 0 && $login_attempt) {
                         <div class="input-group">
                             <span class="input-group-text"><i data-lucide="phone" class="input-icon"></i></span>
                             <input type="tel" class="form-control" id="regPhone" name="reg_phone" required
-                                       autocomplete="tel" inputmode="tel" placeholder="09XX XXX XXXX" value="<?= htmlspecialchars($reg_phone) ?>">
+                                       autocomplete="tel" inputmode="numeric" maxlength="13" pattern="09[0-9]{2} [0-9]{3} [0-9]{4}" title="11-digit mobile number starting with 09 (e.g., 0917 123 4567)" placeholder="09XX XXX XXXX" oninput="formatPhoneNumber(this)" value="<?= htmlspecialchars($reg_phone) ?>">
                         </div>
                     </div>
 
@@ -2823,6 +2827,16 @@ if ($delay_info['delay'] > 0 && $login_attempt) {
 </button>
 
 <script>
+    // Formats input as 09** *** **** (11 digits, digits only)
+    function formatPhoneNumber(input) {
+        var digits = input.value.replace(/\D/g, '').slice(0, 11);
+        var parts = [];
+        if (digits.length > 0) parts.push(digits.slice(0, 4));
+        if (digits.length > 4) parts.push(digits.slice(4, 7));
+        if (digits.length > 7) parts.push(digits.slice(7, 11));
+        input.value = parts.join(' ');
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // Auto-show modal on failed login/register attempt
         <?php if ($login_attempt && $msg): ?>

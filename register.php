@@ -28,9 +28,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Use secure password hashing (bcrypt) - never use MD5!
         $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
-        $phone    = htmlspecialchars(trim($_POST['phone']), ENT_QUOTES, 'UTF-8');
+        $phone    = preg_replace('/\D/', '', $_POST['phone']); // digits only
         $address  = htmlspecialchars(trim($_POST['address']), ENT_QUOTES, 'UTF-8');
 
+        if (!preg_match('/^09\d{9}$/', $phone)) {
+            $msg = "❌ Please enter a valid 11-digit mobile number starting with 09 (e.g., 0917 123 4567).";
+        } else {
         try {
             // Check if email is already registered
             $check = $pdo->prepare("SELECT id FROM users WHERE email=?");
@@ -51,6 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } catch (PDOException $e) {
             $msg = "A database error occurred during registration. Please try again.";
+        }
         }
     }
 }
@@ -543,7 +547,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <!-- Phone -->
                     <div class="form-floating mb-3">
                         <i class="bi bi-telephone input-icon"></i>
-                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="Phone Number" required value="<?= htmlspecialchars($phone_val) ?>">
+                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="Phone Number" required value="<?= htmlspecialchars($phone_val) ?>" inputmode="numeric" maxlength="13" pattern="09[0-9]{2} [0-9]{3} [0-9]{4}" title="11-digit mobile number starting with 09 (e.g., 0917 123 4567)" oninput="formatPhoneNumber(this)">
                         <label for="phone">Phone Number</label>
                     </div>
 
@@ -571,5 +575,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </section>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Formats input as 09** *** **** (11 digits, digits only)
+    function formatPhoneNumber(input) {
+        var digits = input.value.replace(/\D/g, '').slice(0, 11);
+        var parts = [];
+        if (digits.length > 0) parts.push(digits.slice(0, 4));
+        if (digits.length > 4) parts.push(digits.slice(4, 7));
+        if (digits.length > 7) parts.push(digits.slice(7, 11));
+        input.value = parts.join(' ');
+    }
+    </script>
 </body>
 </html>
