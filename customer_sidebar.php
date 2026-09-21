@@ -192,7 +192,7 @@ $totalNotificationCount = count($customerNotificationItems);
         justify-content: space-between;
         flex-shrink: 0;
         position: relative;
-        min-height: 60px;
+        height: 60px;
     }
 
     .sidebar-header::after {
@@ -202,7 +202,7 @@ $totalNotificationCount = count($customerNotificationItems);
         left: 0;
         right: 0;
         height: 2px;
-        background: linear-gradient(90deg, #3b82f6 0%, #FACC15 100%);
+        background: #FACC15;
     }
 
     .sidebar-menu {
@@ -1287,6 +1287,11 @@ $totalNotificationCount = count($customerNotificationItems);
         // Sidebar collapse functionality
         if (sidebarCollapseBtn && sidebar && mainContent) {
             sidebarCollapseBtn.addEventListener('click', function() {
+                if (window.innerWidth <= 992) {
+                    sidebar.classList.remove('active');
+                    if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+                    return;
+                }
                 sidebar.classList.toggle('collapsed');
                 mainContent.classList.toggle('expanded');
 
