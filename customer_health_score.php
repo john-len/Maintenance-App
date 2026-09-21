@@ -92,7 +92,6 @@ try {
             WHERE customer_id = ? AND is_applied = 0
             GROUP BY motorcycle_id
         ) latest ON n.id = latest.max_id
-        WHERE m.health_score < 60
         ORDER BY n.created_at DESC
     ");
     $stmt->execute([$customer_id]);

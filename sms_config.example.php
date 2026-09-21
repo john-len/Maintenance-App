@@ -20,6 +20,9 @@ define('SMS_DEBUG', true);
 
 // IPROG SMS endpoints (from https://www.iprogsms.com/api/v1/documentation)
 define('SMS_API_URL', 'https://www.iprogsms.com/api/v1/sms_messages');
+// Fallback endpoint: sends via IPROGREMIND sender name, which supports ALL networks
+// including Smart/TNT (shared sender names are rejected by Smart/TNT).
+define('SMS_REMINDERS_URL', 'https://www.iprogsms.com/api/v1/message-reminders');
 define('SMS_STATUS_URL', 'https://www.iprogsms.com/api/v1/sms_messages/status');
 define('SMS_CREDITS_URL', 'https://www.iprogsms.com/api/v1/account/sms_credits');
 

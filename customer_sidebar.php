@@ -68,7 +68,7 @@ if (isset($_SESSION['user_id'])) {
             SELECT COUNT(DISTINCT n.motorcycle_id)
             FROM customer_notifications n
             JOIN motorcycles m ON n.motorcycle_id = m.id
-            WHERE n.customer_id = ? AND n.is_applied = 0 AND m.health_score < 60
+            WHERE n.customer_id = ? AND n.is_applied = 0
         ");
         $stmt->execute([$_SESSION['user_id']]);
         $healthScoreNotificationCount = (int) $stmt->fetchColumn();
@@ -83,7 +83,7 @@ if (isset($_SESSION['user_id'])) {
                    m.brand, m.model, m.plate_number
             FROM customer_notifications n
             JOIN motorcycles m ON n.motorcycle_id = m.id
-            WHERE n.customer_id = ? AND n.is_read = 0 AND m.health_score < 60
+            WHERE n.customer_id = ? AND n.is_read = 0
             ORDER BY n.created_at DESC
             LIMIT 5
         ");

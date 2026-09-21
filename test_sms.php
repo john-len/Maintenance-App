@@ -12,7 +12,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
 $sms = new SMSHelper();
 $result = null;
 $phone = '';
-$message = 'This is a test SMS from AutoCare Pro.';
+$message = 'This is a test SMS from Mindanao Eversure.';
 $notificationType = 'TEST_SMS';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['send_test'])) {

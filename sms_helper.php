@@ -4,6 +4,13 @@
 require_once 'db.php';
 require_once 'sms_config.php';
 
+// Fallback endpoint: sends via the IPROGREMIND sender name, which supports ALL
+// networks including Smart/TNT (shared sender names are rejected by Smart/TNT).
+// Can be overridden by defining SMS_REMINDERS_URL in sms_config.php.
+if (!defined('SMS_REMINDERS_URL')) {
+    define('SMS_REMINDERS_URL', 'https://www.iprogsms.com/api/v1/message-reminders');
+}
+
 class SMSHelper {
     private $api_key;
     private $sender_name;
@@ -135,12 +142,80 @@ class SMSHelper {
             $result['message'] = is_array($apiResponse['message'] ?? '') ? json_encode($apiResponse['message']) : (string) ($apiResponse['message'] ?? 'IPROG API error ' . $apiResponse['status']);
             $result['error_code'] = (string) ($apiResponse['status'] ?? 'API_ERROR');
             $result['provider_status'] = (string) ($apiResponse['status'] ?? '');
+
+            // Smart/TNT reject shared sender names - retry via IPROGREMIND (works on all networks)
+            if (stripos($result['message'], 'sender name') !== false) {
+                return $this->sendViaReminder($phone, $message, $notificationType, $result, $metadata);
+            }
+
             $this->logSMS($phone, $message, $notificationType, 'FAILED', $result, $metadata, $response);
             return $result;
         }
 
         $result['message'] = 'Unexpected response (HTTP ' . $httpCode . '): ' . $response;
         $result['error_code'] = 'HTTP_' . $httpCode;
+
+        if (stripos($result['message'], 'sender name') !== false) {
+            return $this->sendViaReminder($phone, $message, $notificationType, $result, $metadata);
+        }
+
+        $this->logSMS($phone, $message, $notificationType, 'FAILED', $result, $metadata, $response);
+        return $result;
+    }
+
+    /**
+     * Fallback sender: schedule the message via IPROG's Message Reminders endpoint.
+     * Reminders are delivered under the IPROGREMIND sender name, which is approved
+     * for all networks (Globe/TM, DITO, Smart/TNT). Used when the shared sender
+     * name is rejected. The message is scheduled ~2 minutes ahead, i.e. near-immediate.
+     */
+    private function sendViaReminder($phone, $message, $notificationType, $result, $metadata) {
+        $scheduledAt = (new DateTime('now', new DateTimeZone('Asia/Manila')))
+            ->modify('+2 minutes')
+            ->format('Y-m-d h:iA');
+
+        $payload = [
+            'api_token'    => $this->api_key,
+            'phone_number' => $phone,
+            'message'      => $message,
+            'scheduled_at' => $scheduledAt
+        ];
+
+        $ch = curl_init(SMS_REMINDERS_URL);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlError) {
+            $result['message'] .= ' | Reminder fallback cURL error: ' . $curlError;
+            $this->logSMS($phone, $message, $notificationType, 'FAILED', $result, $metadata);
+            return $result;
+        }
+
+        $apiResponse = json_decode($response, true);
+
+        if ($httpCode >= 200 && $httpCode < 300 && is_array($apiResponse) && ($apiResponse['status'] ?? '') === 'success') {
+            $result['success'] = true;
+            $result['message'] = 'Sent via IPROGREMIND (all-network sender), scheduled at ' . $scheduledAt;
+            $result['provider_message_id'] = 'reminder-' . ($apiResponse['data']['id'] ?? '');
+            $result['provider_status'] = 'scheduled';
+            $result['error_code'] = '';
+            $this->logSMS($phone, $message, $notificationType, 'SENT', $result, $metadata, $response);
+            return $result;
+        }
+
+        $errMsg = is_array($apiResponse) && isset($apiResponse['message'])
+            ? (is_array($apiResponse['message']) ? json_encode($apiResponse['message']) : $apiResponse['message'])
+            : (string) $response;
+        $result['message'] .= ' | Reminder fallback failed: ' . $errMsg;
         $this->logSMS($phone, $message, $notificationType, 'FAILED', $result, $metadata, $response);
         return $result;
     }

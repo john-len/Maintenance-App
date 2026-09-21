@@ -2,6 +2,8 @@
 session_start();
 require 'db.php';
 require 'motorcycle_health_helper.php';
+require 'sms_helper.php';
+require 'SMSTemplates.php';
 
 // Security check: Only admins can access this page
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
@@ -49,6 +51,11 @@ $modelImages = [
 
 $msg = "";
 $msg_type = "";
+if (!empty($_SESSION['flash_msg'])) {
+    $msg = $_SESSION['flash_msg'];
+    $msg_type = $_SESSION['flash_type'] ?? 'info';
+    unset($_SESSION['flash_msg'], $_SESSION['flash_type']);
+}
 
 // Handle admin "Notify Customer" action for low health scores
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notify_customer'])) {
@@ -68,17 +75,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['notify_customer'])) {
         try {
             $stmt = $pdo->prepare("INSERT INTO customer_notifications (customer_id, motorcycle_id, health_score, recommendation) VALUES (?, ?, ?, ?)");
             $stmt->execute([$customer_id, $motorcycle_id, $health_score, $recommendation]);
-            $msg = "Customer notified successfully";
-            $msg_type = "success";
+            $notificationId = (int) $pdo->lastInsertId();
+
+            // Send SMS to the customer's registered phone number
+            $stmt = $pdo->prepare("SELECT phone FROM users WHERE id = ?");
+            $stmt->execute([$customer_id]);
+            $customerPhone = $stmt->fetchColumn();
+
+            $stmt = $pdo->prepare("SELECT brand, model FROM motorcycles WHERE id = ?");
+            $stmt->execute([$motorcycle_id]);
+            $moto = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+            $flashType = 'success';
+            $smsNote = '';
+            if (!empty($customerPhone)) {
+                try {
+                    $sms = new SMSHelper();
+                    $smsText = SMSTemplates::healthScoreAlert(
+                        $moto['brand'] ?? 'motorcycle',
+                        $moto['model'] ?? '',
+                        $health_score,
+                        empty($items) ? 'General Inspection' : implode(', ', $items)
+                    );
+                    if ($notes !== '') {
+                        $smsText .= ' Note: ' . $notes;
+                    }
+                    $smsResult = $sms->sendSMS($customerPhone, $smsText, 'HEALTH_SCORE_ALERT', [
+                        'user_id' => $customer_id,
+                        'customer_id' => $customer_id,
+                        'motorcycle_id' => $motorcycle_id,
+                        'notification_key' => 'HEALTH_ALERT_' . $notificationId,
+                        'reference_id' => $notificationId
+                    ]);
+                    if ($smsResult['success']) {
+                        $smsNote = ' SMS sent to ' . $customerPhone . '.';
+                    } else {
+                        $smsNote = ' SMS failed: ' . $smsResult['message'];
+                        $flashType = 'warning';
+                    }
+                } catch (Exception $e) {
+                    error_log('Health score SMS error: ' . $e->getMessage());
+                    $smsNote = ' SMS could not be sent.';
+                    $flashType = 'warning';
+                }
+            } else {
+                $smsNote = ' No phone number on file - SMS not sent.';
+                $flashType = 'warning';
+            }
+
+            $_SESSION['flash_msg'] = 'Customer notified successfully.' . $smsNote;
+            $_SESSION['flash_type'] = $flashType;
         } catch (PDOException $e) {
-            $msg = "Failed to notify customer";
-            $msg_type = "danger";
+            $_SESSION['flash_msg'] = "Failed to notify customer";
+            $_SESSION['flash_type'] = "danger";
             error_log("Notify customer error: " . $e->getMessage());
         }
     } else {
-        $msg = "Invalid notification request";
-        $msg_type = "warning";
+        $_SESSION['flash_msg'] = "Invalid notification request";
+        $_SESSION['flash_type'] = "warning";
     }
+
+    // Post/Redirect/Get: prevent duplicate notifications when the page is reloaded
+    header("Location: admin_health_scores.php");
+    exit;
 }
 
 // --- Fetch Available Services ---
@@ -346,8 +405,56 @@ $pageTitle = 'Motorcycle Health Scores';
     }
     .health-event-card.cond-excellent { border-left-color: #10b981; }
     .health-event-card.cond-good { border-left-color: #3b82f6; }
-    .health-event-card.cond-fair { border-left-color: #FACC15; }
-    .health-event-card.cond-poor { border-left-color: #ef4444; }
+
+    /* Low health score highlighting */
+    .health-event-card.cond-fair {
+        background: #fffdf5;
+        border-color: #fde68a;
+        border-left-color: #FACC15;
+    }
+    .health-event-card.cond-poor {
+        background: #fef2f2;
+        border-color: #fca5a5;
+        border-left: 4px solid #ef4444;
+        box-shadow: 0 0 0 1px #fecaca, 0 4px 14px rgba(239, 68, 68, 0.12);
+    }
+    .health-event-card.cond-poor:hover {
+        border-color: #ef4444;
+        box-shadow: 0 0 0 1px #fca5a5, 0 8px 20px rgba(239, 68, 68, 0.2);
+    }
+    .health-event-card.cond-poor .detail-score {
+        animation: hs-pulse-red 1.6s ease-in-out infinite;
+    }
+    @keyframes hs-pulse-red {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45); }
+        50% { box-shadow: 0 0 0 9px rgba(239, 68, 68, 0); }
+    }
+    .hs-stat-number.stat-danger { color: #ef4444; }
+
+    .customer-row.customer-row-alert {
+        border-color: #fca5a5;
+        border-left: 4px solid #ef4444;
+        background: #fffafa;
+    }
+    .customer-row.customer-row-alert:hover {
+        background: #fef2f2;
+        border-color: #ef4444;
+    }
+    .customer-alert-badge {
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fca5a5;
+        border-radius: 8px;
+        padding: 0.35rem 0.65rem;
+        font-weight: 700;
+        font-size: 0.75rem;
+        margin-right: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        white-space: nowrap;
+    }
+    .customer-alert-badge i { font-size: 0.7rem; }
 
     .event-header {
         display: flex;
@@ -569,7 +676,7 @@ $pageTitle = 'Motorcycle Health Scores';
             <div class="hs-stat-label">Overdue Maintenance</div>
         </div>
         <div class="hs-stat-card">
-            <div class="hs-stat-number">
+            <div class="hs-stat-number stat-danger">
                 <?= count(array_filter($motorcycles, function($m) { return $m['health_score'] < 40; })) ?>
             </div>
             <div class="hs-stat-label">Poor Condition</div>
@@ -606,15 +713,21 @@ $pageTitle = 'Motorcycle Health Scores';
                 $customerId = 'customer-' . $customerIndex;
                 $initial = strtoupper(substr($customerName, 0, 1));
                 $count = count($customerMotorcycles);
+                $lowCount = count(array_filter($customerMotorcycles, function($m) { return $m['health_score'] < 40; }));
                 $expanded = $customerIndex === 0 ? 'true' : 'false';
                 $showClass = $customerIndex === 0 ? 'show' : '';
                 ?>
-                <div class="customer-row" data-bs-toggle="collapse" data-bs-target="#<?= $customerId ?>" aria-expanded="<?= $expanded ?>">
+                <div class="customer-row<?= $lowCount > 0 ? ' customer-row-alert' : '' ?>" data-bs-toggle="collapse" data-bs-target="#<?= $customerId ?>" aria-expanded="<?= $expanded ?>">
                     <div class="customer-avatar"><?= $initial ?></div>
                     <div class="customer-info">
                         <div class="customer-name"><?= htmlspecialchars($customerName) ?></div>
                         <div class="customer-count"><?= $count ?> motorcycle<?= $count != 1 ? 's' : '' ?></div>
                     </div>
+                    <?php if ($lowCount > 0): ?>
+                    <div class="customer-alert-badge" title="<?= $lowCount ?> motorcycle(s) in critical condition">
+                        <i class="fas fa-exclamation-triangle"></i> <?= $lowCount ?> at risk
+                    </div>
+                    <?php endif; ?>
                     <div class="customer-badge"><?= $count ?></div>
                     <div class="customer-chevron"><i class="fas fa-chevron-down"></i></div>
                 </div>
@@ -726,7 +839,7 @@ $pageTitle = 'Motorcycle Health Scores';
                                     </div>
                                     <div class="detail-row"><span class="detail-label">Warranty</span><span class="detail-value <?= $warranty['is_valid'] ? 'text-success' : 'text-danger' ?>"><?= $warranty['message'] ?></span></div>
 
-                                    <div class="mt-2 p-2" style="background: #fffbeb; border-radius: 8px; border-left: 3px solid #FACC15; font-size: 0.8rem; color: #111827;">
+                                    <div class="mt-2 p-2" style="background: <?= $health_score < 40 ? '#fee2e2' : '#fffbeb' ?>; border-radius: 8px; border-left: 3px solid <?= $health_score < 40 ? '#ef4444' : '#FACC15' ?>; font-size: 0.8rem; color: #111827;">
                                         <?= getHealthScoreRecommendation($health_score) ?>
                                     </div>
                                 </div>
