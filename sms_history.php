@@ -5,12 +5,19 @@ require 'db.php'; // Required for admin_sidebar_template.php
 // ====================
 // Database Connection
 // ====================
-$conn = new mysqli(
+$conn = mysqli_init();
+$db_ssl = getenv('DB_SSL') === '1' || getenv('DB_SSL') === 'true';
+if ($db_ssl) {
+    $conn->ssl_set(null, null, null, null, null);
+}
+$conn->real_connect(
     getenv('DB_HOST') ?: "localhost",
     getenv('DB_USER') ?: "root",
     getenv('DB_PASS') !== false ? getenv('DB_PASS') : "",
     getenv('DB_NAME') ?: "maintenance_db",
-    (int)(getenv('DB_PORT') ?: 3306)
+    (int)(getenv('DB_PORT') ?: 3306),
+    null,
+    $db_ssl ? MYSQLI_CLIENT_SSL : 0
 );
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
