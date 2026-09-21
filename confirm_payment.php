@@ -185,7 +185,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_booking_final
     $payment_method = $_POST['payment_method'] ?? 'cash';
     $receipt_path = null;
     $booking_status = 'pending'; 
-    $payment_transaction_type = 'full_payment_due'; 
+    $payment_transaction_type = 'full_payment'; 
     $payment_status_for_table = 'pending'; 
     $success_message = "✅ Booking Confirmed! Please prepare CASH for your payment upon service completion. Thank you!";
     
