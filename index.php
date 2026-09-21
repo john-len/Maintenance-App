@@ -355,24 +355,22 @@ $login_button_text = 'Login';
         .btn-cta-primary i { width: 17px; height: 17px; }
 
         .btn-cta-outline {
-            background: #ffffff;
-            color: var(--mev-blue);
-            border: 1.5px solid var(--mev-blue);
+            background: transparent;
+            color: var(--mev-navy);
+            border: none;
             font-weight: 600;
-            padding: 12px 26px;
-            border-radius: 10px;
+            padding: 12px 10px;
             font-size: 0.92rem;
             transition: 0.25s;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
             text-decoration: none;
         }
         .btn-cta-outline:hover {
-            background: var(--mev-blue);
-            color: #ffffff;
-            transform: translateY(-2px);
+            color: var(--mev-blue);
         }
+        .btn-cta-outline i { width: 17px; height: 17px; }
 
         .btn-cta-outline-yellow {
             background: #ffffff;
@@ -1196,7 +1194,7 @@ $login_button_text = 'Login';
             width: 34px;
             height: 34px;
             background: transparent;
-            color: var(--mf-navy);
+            color: #FACC15;
             border-radius: 0;
             box-shadow: none;
         }
@@ -1250,15 +1248,20 @@ $login_button_text = 'Login';
             box-shadow: 0 16px 30px rgba(231, 173, 0, 0.28);
         }
         .btn-cta-outline {
-            border: 1.5px solid #cbd5e1;
-            border-radius: 12px;
+            border: none;
+            background: transparent;
             color: var(--mf-navy);
-            padding: 13px 28px;
+            padding: 13px 10px;
+            font-weight: 600;
+            gap: 4px;
         }
         .btn-cta-outline:hover {
-            background: var(--mf-navy);
-            border-color: var(--mf-navy);
+            background: transparent;
+            color: var(--mf-blue);
+            transform: none;
         }
+        .btn-cta-outline i { transition: transform 0.2s ease; }
+        .btn-cta-outline:hover i { transform: translateX(3px); }
 
         .hero-section {
             min-height: calc(100vh - 74px);
@@ -2143,6 +2146,9 @@ if ($delay_info['delay'] > 0 && $login_attempt) {
                     <div class="hero-cta">
                         <button class="btn btn-cta-primary" data-bs-toggle="modal" data-bs-target="#loginModal">
                             Get Started<i data-lucide="arrow-right"></i>
+                        </button>
+                        <button class="btn btn-cta-outline" data-bs-toggle="modal" data-bs-target="#registerModal">
+                            Create Account<i data-lucide="chevrons-right"></i>
                         </button>
                     </div>
                 </div>

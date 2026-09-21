@@ -907,7 +907,26 @@ $pageIcon = $pageIcons[$currentPage] ?? 'bi-speedometer2';
             .sidebar.show { transform: translateX(0); }
             .main-wrapper { margin-left: 0; width: 100%; }
             .btn-toggle-sidebar { display: block; }
-            .top-header { left: 0; }
+            .top-header { left: 0; padding: 12px 20px; }
+        }
+
+        @media (max-width: 768px) {
+            .top-header { padding: 10px 15px; }
+            .page-title { font-size: 1.1rem; }
+            .page-subtitle { display: none; }
+            .header-user-wrap .user-info { display: none; }
+            .header-user-wrap { gap: 6px; padding: 4px 6px; }
+            .header-user-wrap .user-avatar { width: 36px; height: 36px; font-size: 1rem; }
+            .header-user-dropdown { min-width: 160px; }
+            .main-content { padding: 76px 15px 15px; }
+        }
+
+        @media (max-width: 576px) {
+            .top-header { padding: 8px 12px; }
+            .page-title { font-size: 1rem; gap: 6px; }
+            .mech-notifications { margin-right: 4px; }
+            .notification-bell { width: 36px; height: 36px; font-size: 1.1rem; }
+            .main-content { padding: 70px 12px 12px; }
         }
 
         /* Scroll to top */
@@ -1465,7 +1484,7 @@ $pageIcon = $pageIcons[$currentPage] ?? 'bi-speedometer2';
                     </div>
                 </div>
             </div>
-            <div class="header-user-wrap d-none d-md-flex" id="mechUserWrap">
+            <div class="header-user-wrap" id="mechUserWrap">
                 <div class="user-avatar">
                     <?= strtoupper(substr($mechanicName, 0, 1)) ?>
                 </div>
