@@ -86,6 +86,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             box-sizing: border-box;
         }
 
+        html {
+            overflow-x: hidden;
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
             background-color: var(--bg-light);
@@ -402,8 +406,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /* --- Responsive --- */
         @media (max-width: 576px) {
+            .register-container {
+                padding: 12px;
+            }
+
             .register-card {
                 padding: 30px 20px;
+            }
+
+            .form-floating > .form-control {
+                font-size: 16px;
+            }
+
+            .navbar-collapse {
+                background: rgba(255, 255, 255, 0.98);
+                padding: 12px 16px;
+                border-radius: 12px;
+                margin-top: 10px;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            }
+
+            .navbar-nav .btn-main {
+                margin-left: 0 !important;
+                margin-top: 8px;
+                justify-content: center;
             }
 
             .register-card h2 {

@@ -1780,6 +1780,7 @@ $login_button_text = 'Login';
         #registerModal .modal-dialog { max-width: 860px; }
         .modal-blur-effect .modal-content {
             max-height: calc(100vh - 40px);
+            max-height: calc(100dvh - 40px);
             border: none;
             border-radius: 24px;
             box-shadow: 0 30px 80px rgba(11, 31, 77, 0.28);
@@ -1799,6 +1800,7 @@ $login_button_text = 'Login';
             grid-template-columns: 310px minmax(0, 1fr);
             height: 560px;
             max-height: calc(100vh - 40px);
+            max-height: calc(100dvh - 40px);
             background: #ffffff;
         }
         .auth-visual {
@@ -1929,6 +1931,7 @@ $login_button_text = 'Login';
         .auth-panel {
             min-width: 0;
             max-height: calc(100vh - 40px);
+            max-height: calc(100dvh - 40px);
             overflow-y: auto;
             padding: 34px 34px 26px;
             background: #ffffff;
@@ -2048,7 +2051,7 @@ $login_button_text = 'Login';
                 max-height: none;
             }
             .auth-visual { display: none; }
-            .auth-panel { max-height: calc(100vh - 42px); }
+            .auth-panel { max-height: calc(100vh - 42px); max-height: calc(100dvh - 42px); }
         }
         @media (max-width: 576px) {
             body.mev-landing { padding-top: 70px; }
@@ -2061,6 +2064,10 @@ $login_button_text = 'Login';
             .benefits-grid { grid-template-columns: 1fr; gap: 18px; }
             .auth-panel { padding: 28px 20px 20px; }
             .auth-form-grid { grid-template-columns: 1fr; column-gap: 0; }
+            .modal-blur-effect .modal-dialog { width: calc(100% - 20px); margin: 10px auto; }
+            .modal-blur-effect .modal-content { max-height: calc(100dvh - 20px); border-radius: 18px; }
+            .modal-blur-effect .input-group .form-control { font-size: 16px; }
+            .remember-row { flex-wrap: wrap; gap: 8px; }
         }
     </style>
 </head>
