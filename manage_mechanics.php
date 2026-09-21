@@ -343,7 +343,7 @@ if ($current_specialty !== 'All' && array_key_exists($current_specialty, $specia
         GROUP BY 
             m.id, m.name, m.status, m.created_at
         ORDER BY 
-            m.status DESC, m.name ASC
+            m.name ASC
     ";
     $params[] = $current_specialty;
 } else {
@@ -364,7 +364,7 @@ if ($current_specialty !== 'All' && array_key_exists($current_specialty, $specia
         GROUP BY 
             m.id, m.name, m.status, m.created_at
         ORDER BY 
-            m.status DESC, m.name ASC
+            m.name ASC
     ";
 }
 
@@ -672,6 +672,15 @@ $pageTitle = 'Manage Mechanics';
     }
 
     /* Mechanic list view */
+    .mechanic-total {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
     .mechanic-list {
         background: transparent;
         border: 1px solid var(--card-border);
@@ -889,6 +898,7 @@ $pageTitle = 'Manage Mechanics';
             <?php endif; ?>
         </div>
     <?php else: ?>
+        <div class="mechanic-total"><i class="bi bi-tools"></i> Total Mechanics: <strong><?= count($mechanics) ?></strong></div>
         <div class="mechanic-list">
             <div class="mechanic-list-header">
                 <span class="mechanic-col-name">Name</span>

@@ -67,6 +67,7 @@ function renderCustomerList(array $customers) {
         <p class="text-muted">Start by adding a new customer</p>
     </div>
     <?php else: ?>
+    <div class="customer-total"><i class="bi bi-people"></i> Total Customers: <strong><?= count($customers) ?></strong></div>
     <div class="customer-list" id="customersTable">
         <div class="customer-list-header">
             <span class="customer-col-name">Customer</span>
@@ -571,7 +572,7 @@ try {
         $params = array_fill(0, 10, $searchTerm);
     }
     
-    $query .= " ORDER BY u.created_at DESC";
+    $query .= " ORDER BY u.username ASC";
     
     $stmt = $pdo->prepare($query);
     $stmt->execute($params);
@@ -840,6 +841,15 @@ require 'admin_sidebar_template.php';
     .vc-section-title i { width: 16px; height: 16px; color: var(--accent-color); }
 
     /* Customer list view */
+    .customer-total {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
     .customer-list {
         background: transparent;
         border: 1px solid var(--card-border);

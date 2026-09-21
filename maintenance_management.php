@@ -314,6 +314,12 @@ $pageTitle = 'Maintenance Management';
         height: 3px;
         background: linear-gradient(90deg, #FACC15, #FDE047, #FACC15);
     }
+    .mm-section-title .mm-customer-count {
+        margin-left: auto;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #6b7280;
+    }
     .modal-header {
         background: #fff !important;
         color: #000 !important;
@@ -851,6 +857,7 @@ $pageTitle = 'Maintenance Management';
             <div class="mm-section-title">
                 <i class="bi bi-people"></i>
                 <span>Customer List</span>
+                <span class="mm-customer-count"><?= count($filtered_customers) ?> total</span>
             </div>
             <div class="customer-list">
                 <div class="list-group list-group-flush">
@@ -858,15 +865,9 @@ $pageTitle = 'Maintenance Management';
                         <div class="list-group-item text-muted">No customers found.</div>
                     <?php else: ?>
                         <?php foreach ($filtered_customers as $customer_id => $customer): ?>
-                            <?php
-                            $is_active = ($selected_customer_id == $customer_id);
-                            $alert_count = count($upcoming_by_customer[$customer_id] ?? []) + count($overdue_by_customer[$customer_id] ?? []);
-                            ?>
+                            <?php $is_active = ($selected_customer_id == $customer_id); ?>
                             <a href="?customer_id=<?= $customer_id ?>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center <?= $is_active ? 'active' : '' ?>">
                                 <span><i class="bi bi-person-circle me-2"></i><?= htmlspecialchars($customer['name']) ?></span>
-                                <?php if ($alert_count > 0): ?>
-                                    <span class="badge bg-warning rounded-pill"><?= $alert_count ?></span>
-                                <?php endif; ?>
                             </a>
                         <?php endforeach; ?>
                     <?php endif; ?>

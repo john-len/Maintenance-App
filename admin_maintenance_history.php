@@ -297,6 +297,10 @@ $pageTitle = 'Maintenance History Management';
     .main-content {
         padding-top: 75px !important;
         background: #ffffff !important;
+        display: flex;
+        flex-direction: column;
+        height: 100vh !important;
+        overflow: hidden !important;
     }
     @media (max-width: 991px) {
         .top-header { left: 0 !important; }
@@ -326,6 +330,21 @@ $pageTitle = 'Maintenance History Management';
     .mh-content {
         color: #000000;
         font-size: 0.75rem;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .mh-content .table-responsive {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .mh-content .table-responsive::-webkit-scrollbar {
+        width: 0;
+        background: transparent;
     }
     .mh-content .table {
         font-size: 0.75rem;
@@ -333,13 +352,17 @@ $pageTitle = 'Maintenance History Management';
         background-color: transparent;
     }
     .mh-content .table thead th {
-        background-color: transparent !important;
+        background-color: #f8fafc !important;
         color: #1e3a5f !important;
         font-weight: 700;
         border: none;
+        border-bottom: 2px solid #e2e8f0;
         font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        position: sticky;
+        top: 0;
+        z-index: 5;
     }
     .mh-content .table tbody tr,
     .mh-content .table tbody tr:hover,

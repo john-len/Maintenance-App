@@ -202,8 +202,9 @@ $adminNotifIcons = [
             font-family: 'Poppins', sans-serif;
             background: var(--bg-light);
             color: var(--text-dark);
-            overflow-x: hidden;
+            overflow: hidden;
             width: 100%;
+            height: 100vh;
         }
 
         /* Enhanced Animated Background */
@@ -734,7 +735,9 @@ $adminNotifIcons = [
         /* Main Content */
         .main-wrapper {
             margin-left: var(--sidebar-width);
-            min-height: 100vh;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
             transition: margin-left 0.3s ease;
             background: transparent;
             width: calc(100% - var(--sidebar-width));
@@ -898,7 +901,9 @@ $adminNotifIcons = [
         .main-content {
             padding: 60px 30px 30px 30px;
             background: transparent;
-            min-height: calc(100vh - 80px);
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
         }
 
         /* Page fade-in animation removed to prevent navigation flicker */

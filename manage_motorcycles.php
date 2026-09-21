@@ -256,7 +256,7 @@ try {
         $query .= " AND (m.brand LIKE :search OR m.model LIKE :search OR m.plate_number LIKE :search OR u.username LIKE :search)";
     }
     
-    $query .= " ORDER BY m.created_at DESC";
+    $query .= " ORDER BY m.brand ASC, m.model ASC";
     
     $stmt = $pdo->prepare($query);
     
@@ -558,6 +558,15 @@ require 'admin_sidebar_template.php';
         display: flex;
         flex-direction: column;
         min-height: 0;
+    }
+    .moto-total {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
     }
     .moto-list {
         background: transparent;
@@ -945,6 +954,7 @@ require 'admin_sidebar_template.php';
             <p class="text-muted">Start by registering a new motorcycle</p>
         </div>
     <?php else: ?>
+        <div class="moto-total"><i class="bi bi-motorcycle"></i> Total Motorcycles: <strong><?= count($motorcycles) ?></strong></div>
         <div class="moto-list" id="motorcyclesGrid">
             <div class="moto-list-header">
                 <span class="moto-col-vehicle">Motorcycle</span>
