@@ -2141,10 +2141,9 @@ if ($delay_info['delay'] > 0 && $login_attempt) {
                         </div>
                     </div>
                     <div class="hero-cta">
-                        <button class="btn btn-cta-primary" data-bs-toggle="modal" data-bs-target="#registerModal">
+                        <button class="btn btn-cta-primary" data-bs-toggle="modal" data-bs-target="#loginModal">
                             Get Started<i data-lucide="arrow-right"></i>
                         </button>
-                        <a href="#how-it-works" class="btn btn-cta-outline"><i data-lucide="play"></i>Watch Demo</a>
                     </div>
                 </div>
             </div>
