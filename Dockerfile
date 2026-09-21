@@ -3,6 +3,9 @@ FROM php:8.2-apache
 RUN docker-php-ext-install pdo_mysql mysqli
 RUN a2enmod rewrite
 
+# Match XAMPP php.ini behavior
+RUN echo "output_buffering = 4096" > "$PHP_INI_DIR/conf.d/app.ini"
+
 WORKDIR /var/www/html
 COPY . .
 
