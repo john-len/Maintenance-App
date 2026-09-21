@@ -83,9 +83,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accept_request'])) {
             $stmt = $pdo->prepare("
                 UPDATE emergency_service_requests 
                 SET request_status = 'accepted', updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
+                WHERE id = ? AND request_status IN ('pending', 'new', 'assigned')
             ");
             $stmt->execute([$request_id]);
+
+            if ($stmt->rowCount() === 0) {
+                throw new Exception('Request is not pending or assigned.');
+            }
 
             if (!empty($request['assigned_mechanic_id'])) {
                 $pdo->prepare("UPDATE mechanics SET status = 'Busy' WHERE id = ?")->execute([$request['assigned_mechanic_id']]);
@@ -121,7 +125,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accept_request'])) {
                 $message = "Hi " . $request['customer_name'] . ", your emergency service request for " . $request['motorcycle_info'] . " has been ACCEPTED." . $mechNote;
                 $result = $sms->sendSMS($request['customer_phone'], $message, 'EMERGENCY_ACCEPTED', [
                     'customer_id' => $request['customer_id'],
-                    'booking_id' => $request_id
+                    'booking_id' => $request_id,
+                    'notification_key' => 'EMERGENCY_ACCEPTED_' . $request_id
                 ]);
                 if (!$result['success']) {
                     $smsNote = ' SMS not sent: ' . $result['message'];
@@ -173,9 +178,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['decline_request'])) {
             $stmt = $pdo->prepare("
                 UPDATE emergency_service_requests 
                 SET request_status = 'declined', updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
+                WHERE id = ? AND request_status != 'declined'
             ");
             $stmt->execute([$request_id]);
+
+            if ($stmt->rowCount() === 0) {
+                throw new Exception('Request has already been declined.');
+            }
 
             if (!empty($request['assigned_mechanic_id'])) {
                 $assigned_mech = $request['assigned_mechanic_id'];
@@ -223,7 +232,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['decline_request'])) {
                 $message = "Hi " . $request['customer_name'] . ", we are sorry but your emergency service request for " . $request['motorcycle_info'] . " has been DECLINED. Please contact us for more info.";
                 $result = $sms->sendSMS($request['customer_phone'], $message, 'EMERGENCY_DECLINED', [
                     'customer_id' => $request['customer_id'],
-                    'booking_id' => $request_id
+                    'booking_id' => $request_id,
+                    'notification_key' => 'EMERGENCY_DECLINED_' . $request_id
                 ]);
                 if (!$result['success']) {
                     $smsNote = ' SMS not sent: ' . $result['message'];
@@ -281,9 +291,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['assign_mechanic'])) {
             $stmt = $pdo->prepare("
                 UPDATE emergency_service_requests 
                 SET request_status = 'assigned', assigned_mechanic_id = ?, updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
+                WHERE id = ? AND request_status IN ('pending', 'new', 'accepted', 'assigned')
+                  AND NOT (assigned_mechanic_id <=> ?)
             ");
-            $stmt->execute([$mechanic_id, $request_id]);
+            $stmt->execute([$mechanic_id, $request_id, $mechanic_id]);
+
+            if ($stmt->rowCount() === 0) {
+                throw new Exception('No changes made. This mechanic may already be assigned or the request status has changed.');
+            }
 
             $pdo->prepare("UPDATE mechanics SET status = 'Busy' WHERE id = ?")->execute([$mechanic_id]);
 

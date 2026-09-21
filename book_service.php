@@ -1049,7 +1049,7 @@ foreach ($packages as $pkg) {
                                                 data-type="package"
                                                 class="package-checkbox"
                                                 <?= in_array($pkg['id'], $checked_packages) ? 'checked' : '' ?>>
-                                            <label for="pkg_<?= $pkg['id'] ?>" style="background: rgba(249, 115, 22, 0.03); border-color: var(--accent-color);">
+                                            <label for="pkg_<?= $pkg['id'] ?>">
                                                 <div class="service-info" style="width: 100%;">
                                                     <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
                                                         <div>

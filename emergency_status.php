@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
                 $mechanic_id = (int)$cur->fetchColumn();
             }
 
-            $stmt = $pdo->prepare("UPDATE emergency_service_requests SET request_status = 'accepted', updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE emergency_service_requests SET request_status = 'accepted', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND request_status IN ('pending', 'new', 'assigned')");
             $stmt->execute([$request_id]);
             $movedRows = $stmt->rowCount();
             if ($mechanic_id > 0) {
@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
             exit;
         } elseif ($action === 'decline') {
             $redirectTab = 'declined';
-            $stmt = $pdo->prepare("UPDATE emergency_service_requests SET request_status = 'declined', updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE emergency_service_requests SET request_status = 'declined', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND request_status != 'declined'");
             $stmt->execute([$request_id]);
             $movedRows = $stmt->rowCount();
             $_SESSION['emergency_flash'] = "Request #{$request_id} declined ({$movedRows} row).";
@@ -53,11 +53,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
             $req->execute([$request_id]);
             $assigned = $req->fetchColumn();
 
-            $stmt = $pdo->prepare("UPDATE emergency_service_requests SET request_status = 'completed', updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE emergency_service_requests SET request_status = 'completed', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND request_status != 'completed'");
             $stmt->execute([$request_id]);
             $movedRows = $stmt->rowCount();
 
-            recordCompletedEmergencyHistory($request_id);
+            if ($movedRows > 0) {
+                recordCompletedEmergencyHistory($request_id);
+            }
 
             if ($assigned) {
                 $busy_check = $pdo->prepare("

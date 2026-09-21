@@ -207,7 +207,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'accept' && isset($_GET['id'])
 
         if ($stmt_booking->rowCount() > 0) {
             $report_success = create_report_record($pdo, $booking_id, 'Confirmation Slip');
-            // Send appointment confirmation SMS (best-effort; does not fail the booking)
+            $pdo->commit();
+
+            // Send appointment confirmation SMS after commit (best-effort; does not fail the booking)
             $sms = new SMSHelper();
             $sms_sent = false;
 
@@ -238,7 +240,6 @@ if (isset($_GET['action']) && $_GET['action'] === 'accept' && isset($_GET['id'])
                 $sms_sent = !empty($sms_result['success']) && empty($sms_result['error_code']);
             }
 
-            $pdo->commit();
             $mechanic_count = count($assigned_mechanic_ids);
             $msg = "Appointment #{$booking_id} CONFIRMED! {$mechanic_count} Mechanic(s) set to BUSY.";
             if ($sms_sent) $msg .= " SMS sent.";
@@ -250,7 +251,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'accept' && isset($_GET['id'])
         }
 
     } catch (Exception $e) {
-        $pdo->rollBack();
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         $msg = "Database Error: " . $e->getMessage();
         $msg_type = "error";
     }
@@ -1152,6 +1155,14 @@ $serviceList = $pdo->query("SELECT service_name FROM services ORDER BY service_n
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         lucide.createIcons();
+
+        // Remove ?msg=&type= from URL so a reload doesn't re-show the alert
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('msg')) {
+            url.searchParams.delete('msg');
+            url.searchParams.delete('type');
+            window.history.replaceState({}, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams.toString() : ''));
+        }
 
         const searchInput = document.getElementById('bookingSearch');
         const statusSelect = document.getElementById('statusFilter');
